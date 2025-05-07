@@ -10,6 +10,7 @@ namespace DragonLens.Core.Systems.ThemeSystem
 	{
 		public readonly static Dictionary<string, ThemeBoxProvider> allBoxProviders = new();
 		public readonly static Dictionary<string, ThemeIconProvider> allIconProviders = new();
+		private static readonly Dictionary<string, Asset<Texture2D>> apiIcons = new();
 
 		private readonly static Dictionary<Type, ThemeBoxProvider> allBoxProvidersByType = new();
 		private readonly static Dictionary<Type, ThemeIconProvider> allIconProvidersByType = new();
@@ -92,6 +93,12 @@ namespace DragonLens.Core.Systems.ThemeSystem
 			return allIconProvidersByType[typeof(T)];
 		}
 
+		/// <summary>Add an icon at runtime so every icon provider can draw it.</summary>
+		public static void RegisterAPIIcon(string key, Asset<Texture2D> tex)
+		{
+			apiIcons[key] = tex;
+		}
+
 		public override void Load()
 		{
 			foreach (Type t in GetType().Assembly.GetTypes())
@@ -117,6 +124,8 @@ namespace DragonLens.Core.Systems.ThemeSystem
 		/// <returns>a Texture2D for the icon</returns>
 		public static Texture2D GetIcon(string key)
 		{
+			if (apiIcons.TryGetValue(key, out var tex))
+				return tex.Value;                       // 1 – icons supplied by other mods at runtime
 			return currentIconProvider.GetIcon(key);
 		}
 
