@@ -52,9 +52,17 @@ namespace DragonLens.Core.Systems
 		public static bool CanUseTools(Player player)
 		{
 			if (Main.netMode == NetmodeID.SinglePlayer)
+			{
 				return true;
-			else
-				return admins.Contains(player.GetModPlayer<PermissionPlayer>().currentServerID);
+			}
+
+			string id = player.GetModPlayer<PermissionPlayer>().currentServerID;
+			if (string.IsNullOrWhiteSpace(id))
+			{
+				return false;
+			}
+
+			return admins.Contains(id);
 		}
 
 		/// <summary>
