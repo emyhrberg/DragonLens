@@ -6,13 +6,30 @@ using DragonLens.Helpers;
 using ReLogic.Content;
 using System.Collections.Generic;
 using System.IO;
+using Terraria.ID;
 using Terraria.UI;
 
 namespace DragonLens.Content.GUI
 {
 	internal class FirstTimeLayoutPresetMenu : SmartUIState
 	{
-		public override bool Visible => FirstTimeSetupSystem.trueFirstTime;
+		public override bool Visible
+		{
+			get
+			{
+				if (!FirstTimeSetupSystem.trueFirstTime)
+				{
+					return false;
+				}
+
+				if (Main.netMode == NetmodeID.SinglePlayer)
+				{
+					return true;
+				}
+
+				return PermissionHandler.CanUseTools(Main.LocalPlayer);
+			}
+		}
 
 		public override int InsertionIndex(List<GameInterfaceLayer> layers)
 		{
@@ -80,6 +97,11 @@ namespace DragonLens.Content.GUI
 
 		public override void SafeClick(UIMouseEvent evt)
 		{
+			if (Main.netMode != NetmodeID.SinglePlayer && !PermissionHandler.CanUseTools(Main.LocalPlayer))
+			{
+				return;
+			}
+
 			ToolbarHandler.LoadFromFile(presetPath);
 
 			ToolbarHandler.ExportToFile(Path.Join(Main.SavePath, "DragonLensLayouts", "Current"));

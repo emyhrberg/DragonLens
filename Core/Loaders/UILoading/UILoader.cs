@@ -134,8 +134,7 @@ namespace DragonLens.Core.Loaders.UILoading
 		/// <param name="layers"></param>
 		public override void ModifyInterfaceLayers(List<GameInterfaceLayer> layers)
 		{
-			List<Tuple<UserInterface, int>> orderedInterfaces = new();
-
+			List<Tuple<UserInterface, int>> orderedInterfaces = [];
 			for (int k = 0; k < UserInterfaces.Count; k++)
 			{
 				UserInterface inter = UserInterfaces[k];
@@ -143,7 +142,7 @@ namespace DragonLens.Core.Loaders.UILoading
 				if (inter.CurrentState is not SmartUIState)
 					continue;
 
-				SmartUIState state = inter.CurrentState as SmartUIState;
+				var state = inter.CurrentState as SmartUIState;
 
 				int index = state.InsertionIndex(layers);
 				AddLayer(layers, inter, index, () =>

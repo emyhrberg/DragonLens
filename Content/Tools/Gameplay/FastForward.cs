@@ -85,14 +85,35 @@ namespace DragonLens.Content.Tools.Gameplay
 	{
 		public override void Load()
 		{
+			if (Main.dedServ)
+			{
+				return;
+			}
+
 			Terraria.On_Main.DoUpdate += UpdateExtraTimes;
+		}
+
+		public override void Unload()
+		{
+			Terraria.On_Main.DoUpdate -= UpdateExtraTimes;
 		}
 
 		private void UpdateExtraTimes(Terraria.On_Main.orig_DoUpdate orig, Main self, ref GameTime gameTime)
 		{
 			orig(self, ref gameTime);
 
-			for (int k = 0; k < FastForward.speedup; k++)
+			if (Main.netMode != NetmodeID.SinglePlayer)
+			{
+				return;
+			}
+
+			int extra = FastForward.speedup;
+			if (extra <= 0)
+			{
+				return;
+			}
+
+			for (int k = 0; k < extra; k++)
 			{
 				orig(self, ref gameTime);
 			}
