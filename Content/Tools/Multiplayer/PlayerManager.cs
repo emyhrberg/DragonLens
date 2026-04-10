@@ -1,4 +1,5 @@
-﻿using DragonLens.Content.Filters;
+﻿using DragonLens.Common.Compat;
+using DragonLens.Content.Filters;
 using DragonLens.Content.Filters.PlayerManagerFilters;
 using DragonLens.Content.Filters.PlayerManagerFilters.Toggles;
 using DragonLens.Content.GUI;
@@ -14,6 +15,8 @@ using DragonLens.Core.Systems.ToolSystem;
 using DragonLens.Helpers;
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Text;
 using Terraria.GameContent;
 using Terraria.GameContent.Bestiary;
 using Terraria.ID;
@@ -55,6 +58,7 @@ namespace DragonLens.Content.Tools.Multiplayer
 		public override int BrowserWidth => 520;
 		//private ReloadButton reloadButton; // Keep this in case we re-add reload button.
 		public PlayerManagerSettings Settings { get; } = new();
+		private string playerListSnapshot = "";
 
 		public PlayerManagerBrowser()
 		{
@@ -88,10 +92,10 @@ namespace DragonLens.Content.Tools.Multiplayer
 		public override void PopulateGrid(UIGrid grid)
 		{
 			var buttons = new List<PlayerManagerItem>();
-			List<Player> players = [.. Main.ActivePlayers, .. ModContent.GetInstance<PlayerManagerSystem>().fakePlayers];
 
-			foreach (Player player in players)
+			for (int i = 0; i < Main.maxPlayers; i++)
 			{
+				Player player = Main.player[i];
 				if (player is null || !player.active)
 					continue;
 
@@ -119,34 +123,18 @@ namespace DragonLens.Content.Tools.Multiplayer
 					return string.Compare(left.Identifier, right.Identifier, StringComparison.OrdinalIgnoreCase);
 				}));
 
-			//SortModes.Add(new("Life",
-			//	(a, b) =>
-			//	{
-			//		PlayerManagerItem left = (PlayerManagerItem)a;
-			//		PlayerManagerItem right = (PlayerManagerItem)b;
+			SortModes.Add(new("Life",
+				(a, b) =>
+				{
+					PlayerManagerItem left = (PlayerManagerItem)a;
+					PlayerManagerItem right = (PlayerManagerItem)b;
 
-			//		int lifeCompare = right.player.statLife.CompareTo(left.player.statLife);
-			//		if (lifeCompare != 0)
-			//			return lifeCompare;
+					int lifeCompare = right.player.statLife.CompareTo(left.player.statLife);
+					if (lifeCompare != 0)
+						return lifeCompare;
 
-			//		return string.Compare(left.Identifier, right.Identifier, StringComparison.OrdinalIgnoreCase);
-			//	}));
-
-			//SortModes.Add(new("SessionTime",
-			//	(a, b) =>
-			//	{
-			//		PlayerManagerItem left = (PlayerManagerItem)a;
-			//		PlayerManagerItem right = (PlayerManagerItem)b;
-
-			//		long leftTicks = SessionTracker.GetSessionDurationTicks(left.player.whoAmI);
-			//		long rightTicks = SessionTracker.GetSessionDurationTicks(right.player.whoAmI);
-
-			//		int sessionCompare = rightTicks.CompareTo(leftTicks);
-			//		if (sessionCompare != 0)
-			//			return sessionCompare;
-
-			//		return string.Compare(left.Identifier, right.Identifier, StringComparison.OrdinalIgnoreCase);
-			//	}));
+					return string.Compare(left.Identifier, right.Identifier, StringComparison.OrdinalIgnoreCase);
+				}));
 
 			SortFunction = SortModes[0].Function;
 		}
@@ -233,6 +221,7 @@ namespace DragonLens.Content.Tools.Multiplayer
 			filters.AddFilter(new ButtonOptionFilter(this, "BringHere", Assets.GUI.BringHere));
 			filters.AddFilter(new ButtonOptionFilter(this, "GoTo", Assets.GUI.GoTo));
 			filters.AddFilter(new ButtonOptionFilter(this, "Frozen", Assets.GUI.Frozen));
+			filters.AddFilter(new ButtonOptionFilter(this, "Spectator", Assets.GUI.Ghost));
 
 			// Stat toggles
 			filters.AddSeperator(LocalizationHelper.GetToolText("PlayerManager.FilterCategories.StatOptions"));
@@ -268,12 +257,51 @@ namespace DragonLens.Content.Tools.Multiplayer
 			filters.AddFilter(new PlayerOptionFilter(this, "PlayerFull", Assets.Stats.PlayerFull));
 		}
 
+		public override void DraggableUdpate(GameTime gameTime)
+		{
+			if (!visible || options is null)
+				return;
+
+			string currentSnapshot = BuildPlayerListSnapshot();
+			if (currentSnapshot == playerListSnapshot)
+				return;
+
+			RefreshEntries(currentSnapshot);
+		}
+
 		public void RefreshEntries() 
+		{
+			RefreshEntries(BuildPlayerListSnapshot());
+		}
+
+		private void RefreshEntries(string currentSnapshot)
 		{ 
+			playerListSnapshot = currentSnapshot;
 			options.Clear(); 
 			PopulateGrid(options); 
 			SortGrid(); 
 			Recalculate(); 
+		}
+
+		private static string BuildPlayerListSnapshot()
+		{
+			var snapshot = new StringBuilder();
+
+			for (int i = 0; i < Main.maxPlayers; i++)
+			{
+				Player player = Main.player[i];
+				if (player is null || !player.active)
+					continue;
+
+				snapshot.Append(i);
+				snapshot.Append(':');
+				snapshot.Append(RuntimeHelpers.GetHashCode(player));
+				snapshot.Append(':');
+				snapshot.Append(player.name);
+				snapshot.Append('|');
+			}
+
+			return snapshot.ToString();
 		}
 	}
 
@@ -283,7 +311,6 @@ namespace DragonLens.Content.Tools.Multiplayer
 
 		private readonly Dictionary<string, PlayerManagerActionButton> actionButtons = [];
 
-		private bool IsFake => player.whoAmI < 0;
 		private PlayerManagerSystem PlayerManager => ModContent.GetInstance<PlayerManagerSystem>();
 		private PlayerManagerBrowser PlayerBrowser => (PlayerManagerBrowser)parent;
 		public PlayerManagerItem(Player player, PlayerManagerBrowser parent) : base(parent)
@@ -300,6 +327,7 @@ namespace DragonLens.Content.Tools.Multiplayer
 
 		private void CreateButtons()
 		{
+			AddActionButton("Spectator", new("Spectator", Assets.GUI.Ghost, ToggleSpectator, () => GhostSpectatingCompat.IsSpectator(player.whoAmI)));
 			AddActionButton("Frozen", new("Freeze", Assets.GUI.Frozen, FreezePlayer, () => PlayerManager.frozenPlayers.Contains(player.whoAmI)));
 			AddActionButton("GoTo", new("GoTo", Assets.GUI.GoTo, TeleportToPlayer));
 			AddActionButton("BringHere", new("BringHere", Assets.GUI.BringHere, TeleportToMe));
@@ -310,7 +338,7 @@ namespace DragonLens.Content.Tools.Multiplayer
 			}));
 			AddActionButton("View", new("View", Assets.GUI.StalkIcon, Stalk, () => PlayerManager.stalkedPlayer == player));
 			AddActionButton("Kick", new("Kick", Assets.GUI.KickIcon, Kick));
-			AddActionButton("Admin", new("Admin", Assets.GUI.AdminIcon, ToggleAdmin, () => !IsFake && PermissionHandler.LooksLikeAdmin(player)));
+			AddActionButton("Admin", new("Admin", Assets.GUI.AdminIcon, ToggleAdmin, () => PermissionHandler.LooksLikeAdmin(player)));
 		}
 
 		private void AddActionButton(string key, PlayerManagerActionButton button)
@@ -349,6 +377,12 @@ namespace DragonLens.Content.Tools.Multiplayer
 
 			foreach ((string key, PlayerManagerActionButton button) in actionButtons)
 			{
+				if (key == "Spectator" && !GhostSpectatingCompat.IsAvailable())
+				{
+					HideButton(button);
+					continue;
+				}
+
 				if (!PlayerBrowser.Settings.IsButtonVisible(key))
 				{
 					HideButton(button);
@@ -452,25 +486,30 @@ namespace DragonLens.Content.Tools.Multiplayer
 		#region Actions for buttons
 		public void FreezePlayer()
 		{
-			if (IsFake)
+			PlayerManagerNetHandler.SendFrozenPlayer(player.whoAmI);
+		}
+
+		public void ToggleSpectator()
+		{
+			if (!PermissionHandler.CanUseTools(Main.LocalPlayer))
 				return;
 
-			PlayerManagerNetHandler.SendFrozenPlayer(player.whoAmI);
+			if (!GhostSpectatingCompat.IsAvailable())
+			{
+				Main.NewText("GhostSpectating mod is not loaded.", Color.Red);
+				return;
+			}
+
+			GhostSpectatingNetHandler.SendToggleSpectator(player.whoAmI);
 		}
 
 		public void TeleportToMe()
 		{
-			if (IsFake)
-				return;
-
 			PlayerManagerNetHandler.SendTeleportToMe(player.whoAmI);
 		}
 
 		public void TeleportToPlayer()
 		{
-			if (IsFake)
-				return;
-
 			Player localPlayer = Main.LocalPlayer;
 
 			if (localPlayer == null || !player.active)
@@ -489,9 +528,6 @@ namespace DragonLens.Content.Tools.Multiplayer
 
 		public void ToggleAdmin()
 		{
-			if (IsFake)
-				return;
-
 			if (!PermissionHandler.CanUseTools(Main.LocalPlayer))
 				return;
 
@@ -515,17 +551,11 @@ namespace DragonLens.Content.Tools.Multiplayer
 
 		public void Kick()
 		{
-			if (IsFake)
-				return;
-
 			PlayerManagerNetHandler.SendKick(player.whoAmI);
 		}
 
 		public void Stalk()
 		{
-			if (IsFake)
-				return;
-
 			if (PlayerManager.stalkedPlayer == player)
 				PlayerManager.stalkedPlayer = null;
 			else
@@ -534,9 +564,6 @@ namespace DragonLens.Content.Tools.Multiplayer
 
 		public void OpenInventory()
 		{
-			if (IsFake)
-				return;
-
 			InventoryManagerWindow inventory = UILoader.GetUIState<InventoryManagerWindow>();
 
 			if (inventory.visible && inventory.player == player)

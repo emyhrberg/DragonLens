@@ -17,22 +17,24 @@ namespace DragonLens.Core.Loaders.UILoading
 		/// <summary>
 		/// The collection of automatically craetaed UserInterfaces for SmartUIStates.
 		/// </summary>
-		public static List<UserInterface> UserInterfaces = new();
-		public static List<UserInterface> SortedUserInterfaces = new();
+		public static List<UserInterface> UserInterfaces = [];
+		public static List<UserInterface> SortedUserInterfaces = [];
 
 		/// <summary>
 		/// The collection of all automatically loaded SmartUIStates.
 		/// </summary>
-		public static List<SmartUIState> UIStates = new();
+		public static List<SmartUIState> UIStates = [];
 
 		public static SmartUIState GetTopmostHoveredState()
 		{
-			if (SortedUserInterfaces is null)
+			List<UserInterface> interfaces = SortedUserInterfaces is { Count: > 0 } ? SortedUserInterfaces : UserInterfaces;
+
+			if (interfaces is null)
 				return null;
 
 			Point mouse = Main.MouseScreen.ToPoint();
 
-			foreach (UserInterface ui in SortedUserInterfaces)
+			foreach (UserInterface ui in interfaces)
 			{
 				if (ui?.CurrentState is not SmartUIState state || !state.Visible || !state.ParticipatesInHoverOwnership)
 					continue;
@@ -48,23 +50,30 @@ namespace DragonLens.Core.Loaders.UILoading
 		{
 			if (element is null)
 			{
-				//Main.NewText("Error: Null element!");
+				Main.NewText("Error: Null element!");
 				return false;
 			}
 
 			SmartUIState owner = GetOwningState(element);
 			SmartUIState topmost = GetTopmostHoveredState();
-			bool result = owner is not null && ReferenceEquals(owner, topmost);
+			bool result = owner is not null && (topmost is null || ReferenceEquals(owner, topmost));
 
 			string elementName = element.GetType().Name;
 			string ownerName = owner?.GetType().Name ?? "null";
 			string topmostName = topmost?.GetType().Name ?? "null";
 
 #if DEBUG
-			if (element.IsMouseHovering)
+			if (element.IsMouseHovering && Main.GameUpdateCount % 60 == 0)
 			{
-				ModContent.GetInstance<DragonLens>().Logger.Debug(($"CanShowTooltip: element={elementName}, owner={ownerName}, topmost={topmostName}, result={result}"));
-				//Main.NewText(($"CanShowTooltip: element={elementName}, owner={ownerName}, topmost={topmostName}, result={result}"));
+				int sortedCount = SortedUserInterfaces?.Count ?? -1;
+				int uiCount = UserInterfaces?.Count ?? -1;
+				Point mouse = Main.MouseScreen.ToPoint();
+
+				if (result is false)
+				{
+					//Main.NewText($"CantShowTooltip: element={elementName}, owner={ownerName}, topmost={topmostName}, result={result}, sorted={sortedCount}, ui={uiCount}, mouse={mouse}", Color.Orange);
+				}
+
 			}
 #endif
 
@@ -162,9 +171,12 @@ namespace DragonLens.Core.Loaders.UILoading
 
 		public override void Unload()
 		{
-			UIStates.ForEach(n => n.Unload());
-			UserInterfaces = null;
-			UIStates = null;
+			foreach (SmartUIState state in UIStates)
+				state?.Unload();
+
+			UserInterfaces = [];
+			SortedUserInterfaces = [];
+			UIStates = [];
 		}
 
 		/// <summary>
@@ -263,10 +275,20 @@ namespace DragonLens.Core.Loaders.UILoading
 		/// <typeparam name="T">The SmartUIState subclass to reload</typeparam>
 		public static void ReloadState<T>() where T : SmartUIState
 		{
-			int index = UIStates.IndexOf(GetUIState<T>());
-			UIStates[index] = (T)Activator.CreateInstance(typeof(T), null);
-			UserInterfaces[index] = new UserInterface();
-			UserInterfaces[index].SetState(UIStates[index]);
+			T oldState = GetUIState<T>();
+			int index = UIStates.IndexOf(oldState);
+
+			if (index < 0)
+				return;
+
+			T newState = (T)Activator.CreateInstance(typeof(T), null);
+			UserInterface userInterface = new();
+
+			userInterface.SetState(newState);
+			newState.UserInterface = userInterface;
+
+			UIStates[index] = newState;
+			UserInterfaces[index] = userInterface;
 		}
 
 		/// <summary>

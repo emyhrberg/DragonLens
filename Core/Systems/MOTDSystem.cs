@@ -20,7 +20,7 @@ namespace DragonLens.Core.Systems
 			if (Mod.Version > seenMotd)
 			{
 				string MOTD = LocalizationHelper.GetText("MOTD", Mod.Version);
-				Main.NewText(MOTD, new Color(200, 235, 255));
+				//Main.NewText(MOTD, new Color(200, 235, 255));
 			}
 
 			seenMotd = Mod.Version;

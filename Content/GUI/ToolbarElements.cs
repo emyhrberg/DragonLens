@@ -459,6 +459,7 @@ namespace DragonLens.Content.GUI
 			var innerRect = GetDimensions().ToRectangle();
 			innerRect.Inflate(-4, -4);
 
+			// NRE!
 			tool.DrawIcon(spriteBatch, innerRect);
 
 			if (IsMouseHovering && !parent.toolbar.collapsed && CanShowTooltip)

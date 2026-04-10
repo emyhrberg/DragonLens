@@ -3,6 +3,7 @@ global using Microsoft.Xna.Framework.Graphics;
 global using ReLogic.Content;
 global using Terraria;
 global using Terraria.ModLoader;
+using DragonLens.Common.Compat;
 using DragonLens.Content.Tools.Multiplayer;
 using DragonLens.Core.Systems;
 using DragonLens.Core.Systems.ToolSystem;
@@ -40,6 +41,9 @@ namespace DragonLens
 
 			if (type == "PingTracker")
 				PingTrackerNetHandler.HandlePacket(reader, whoAmI);
+
+			if (type == "ToggleSpectator")
+				GhostSpectatingNetHandler.ReceiveToggleSpectator(reader, whoAmI);
 		}
 	}
 }

@@ -19,7 +19,15 @@ namespace DragonLens.Content.GUI
 
 		public void Load(Mod mod)
 		{
+			if (Main.dedServ)
+				return;
+
 			On_Main.Update += Reset;
+		}
+
+		public override void Unload()
+		{
+			On_Main.Update -= Reset;
 		}
 
 		public override int InsertionIndex(List<GameInterfaceLayer> layers)
@@ -90,12 +98,12 @@ namespace DragonLens.Content.GUI
 
 		private void Reset(On_Main.orig_Update orig, Main self, GameTime gameTime)
 		{
-			orig(self, gameTime);
-
 			//reset
 			text = null;
 			tooltip = null;
 			color = Color.White;
+
+			orig(self, gameTime);
 		}
 	}
 }

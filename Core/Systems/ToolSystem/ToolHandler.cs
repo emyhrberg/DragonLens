@@ -38,7 +38,7 @@ namespace DragonLens.Core.Systems.ToolSystem
 			string tool = reader.ReadString();
 			Tool target = ModContent.Find<Tool>(tool);
 
-			ModLoader.GetMod("DragonLens").Logger.Info($"Recieved packet for tool {tool} from {sender}");
+			//ModLoader.GetMod("DragonLens").Logger.Info($"Recieved packet for tool {tool} from {sender}");
 
 			if (target != null)
 				target.RecievePacket(reader, sender);

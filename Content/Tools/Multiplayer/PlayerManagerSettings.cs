@@ -16,7 +16,7 @@ internal sealed class PlayerManagerSettings
 	#endregion
 
 	#region Stat toggle
-	private const int TotalActionButtons = 7;
+	private const int TotalActionButtons = 8;
 
 	internal static readonly string[] StatOrder =
 	[

@@ -876,6 +876,12 @@ PlayerManager: {
 	}
 
 	Filters: {
+		Spectator: {
+			// Name: Spectator
+			// Description: Any players currently spectating as ghosts
+			// Toggle: Show or hide Spectator button
+		}
+
 		Frozen: {
 			// Name: Frozen
 			// Description: Any players currently frozen
@@ -1112,6 +1118,11 @@ PlayerManager: {
 	Freeze: {
 		// Name: Freeze
 		// Tooltip: Freeze this player
+	}
+
+	Spectator: {
+		// Name: Spectator
+		// Tooltip: Switch spectator mode for this player
 	}
 
 	InventoryManager: {

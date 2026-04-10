@@ -11,6 +11,12 @@
       "executablePath": "$(DotNetPath)",
       "commandLineArgs": "$(tMLServerPath)",
       "workingDirectory": "$(tMLSteamPath)"
+    },
+    "TerrariaFast": {
+      "commandName": "Executable",
+      "executablePath": "$(DotNetPath)",
+      "commandLineArgs": "$(tMLPath) -skipselect \"TestPlayer:Spawnbox\"",
+      "workingDirectory": "$(tMLSteamPath)"
     }
   }
 }
