@@ -319,17 +319,36 @@ namespace DragonLens.Content.Tools.Gameplay
 				GUIHelper.DrawOutline(spriteBatch, dims, ThemeHandler.ButtonColor.InvertColor());
 
 			Texture2D icon = Terraria.GameContent.TextureAssets.Moon[Main.moonType].Value;
-
 			var source = new Rectangle(0, moonPhase * 50, 50, 50);
 
 			spriteBatch.Draw(icon, dims.Center(), source, Color.White, 0, Vector2.One * 25, 0.65f, 0, 0);
+
+			if (IsMouseHovering && CanShowTooltip)
+			{
+				Tooltip.SetName($"{GetMoonPhaseName(moonPhase)}");
+				Tooltip.SetTooltip("");
+			}
 		}
 
 		public override void SafeClick(UIMouseEvent evt)
 		{
 			Main.moonPhase = moonPhase;
-
 			ToolHandler.NetSend<Time>();
+		}
+
+		private static string GetMoonPhaseName(int moonPhase)
+		{
+			return moonPhase switch
+			{
+				0 => "Full Moon",
+				1 => "Waning Gibbous",
+				2 => "Third Quarter",
+				3 => "Waning Crescent",
+				4 => "New Moon",
+				5 => "Waxing Crescent",
+				6 => "First Quarter",
+				_ => "Waxing Gibbous"
+			};
 		}
 	}
 }

@@ -295,6 +295,16 @@ Time: {
 	FreezeTooltip: Позволяет останавливать течение времени. Это в том числе сохранит текущий момент времени между мирами и перезапусками игры!
 }
 
+Timescale: {
+	// DisplayName: Timescale
+	// Description: Adjust how quickly game ticks advance
+	// UITitle: Set timescale
+	// Speed: Speed: {0}
+	// Pause: Pause
+	// Resume: Resume
+	// SetSpeed: Set speed to {0}
+}
+
 Weather: {
 	DisplayName: Изменить погоду
 	Description: Позволяет изменять погоду

@@ -290,6 +290,16 @@ Time: {
 	FreezeTooltip: 使该世界停止时间流动，在世界和游戏重新加载后仍有效。
 }
 
+Timescale: {
+	// DisplayName: Timescale
+	// Description: Adjust how quickly game ticks advance
+	// UITitle: Set timescale
+	// Speed: Speed: {0}
+	// Pause: Pause
+	// Resume: Resume
+	// SetSpeed: Set speed to {0}
+}
+
 Weather: {
 	DisplayName: 天气工具
 	Description: 修改天气
