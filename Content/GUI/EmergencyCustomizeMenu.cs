@@ -16,6 +16,11 @@ namespace DragonLens.Content.GUI
 
 		public override bool Visible => Main.playerInventory;
 
+		public override bool OwnsMouse(Point mouse)
+		{
+			return button?.GetDimensions().ToRectangle().Contains(mouse) == true;
+		}
+
 		public override int InsertionIndex(List<GameInterfaceLayer> layers)
 		{
 			return layers.FindIndex(layer => layer.Name.Equals("Vanilla: Mouse Text"));

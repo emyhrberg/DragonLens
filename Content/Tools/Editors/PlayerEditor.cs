@@ -59,6 +59,8 @@ namespace DragonLens.Content.Tools.Editors
 
 	internal class PlayerEditorState : DraggableUIState
 	{
+		public override Tool OwnerTool => ModContent.GetInstance<PlayerEditorTool>();
+
 		public Player player = Main.LocalPlayer;
 
 		public UIGrid basicEditorList;

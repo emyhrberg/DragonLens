@@ -78,7 +78,7 @@ namespace DragonLens.Helpers
 		}
 
 		/// <summary>
-		/// Wraps a string to a given maximum width, by forcibly adding newlines. Normal newlines will be removed, put the text 'NEWBLOCK' in your string to break a paragraph if needed.
+		/// Wraps a string to a given maximum width, by forcibly adding newlines. Existing newlines are preserved, and NEWBLOCK can be used to break a paragraph.
 		/// </summary>
 		/// <param name="input">The input string to be wrapped</param>
 		/// <param name="length">The maximum width of the text</param>
@@ -87,6 +87,7 @@ namespace DragonLens.Helpers
 		/// <returns>Input text with linebreaks inserted so it obeys the width constraint.</returns>
 		public static string WrapString(string input, int length, DynamicSpriteFont font, float scale)
 		{
+			input = LocalizationHelper.ApplyControlTokens(input) ?? "";
 			string output = "";
 
 			// In case input is empty and causes an error, we put an empty string to the list
@@ -96,6 +97,21 @@ namespace DragonLens.Helpers
 			string cacheString = "";
 			for (int i = 0; i < input.Length; i++)
 			{
+				if (input[i] == '\r')
+					continue;
+
+				if (input[i] == '\n')
+				{
+					if (cacheString != string.Empty)
+					{
+						words.Add(cacheString);
+						cacheString = "";
+					}
+
+					words.Add("\n");
+					continue;
+				}
+
 				// By doing this we split words, and make the first character of words always a space
 				if (cacheString != string.Empty && char.IsWhiteSpace(input[i]))
 				{
@@ -139,14 +155,7 @@ namespace DragonLens.Helpers
 			string line = "";
 			foreach (string str in words)
 			{
-				if (str == " NEWBLOCK")
-				{
-					output += "\n\n";
-					line = "";
-					continue;
-				}
-
-				if (str == " NEWLN")
+				if (str == "\n")
 				{
 					output += "\n";
 					line = "";

@@ -64,6 +64,11 @@ Layout: {
 		Tooltip: An advanced layout with every tool available. Perfect for mod developers or power users.
 	}
 
+	ErkysLayout: {
+		Name: Erkys Layout
+		Tooltip: An advanced layout with power tools on the bottom, developer tools on the right, and (optional) other mod extra tools to the left
+	}
+
 	HEROsMod: {
 		Name: HEROs Mod imitation
 		Tooltip: A layout attempting to mimic HEROs mod as closely as possible.

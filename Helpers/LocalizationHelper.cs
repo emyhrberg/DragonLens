@@ -14,7 +14,17 @@ namespace DragonLens.Helpers
 		/// <returns>the text should be displayed</returns>
 		public static string GetText(string key, params object[] args)
 		{
-			return Language.Exists($"Mods.DragonLens.{key}") ? Language.GetTextValue($"Mods.DragonLens.{key}", args) : key;
+			string value = Language.Exists($"Mods.DragonLens.{key}") ? Language.GetTextValue($"Mods.DragonLens.{key}", args) : key;
+			return ApplyControlTokens(value);
+		}
+
+		public static string ApplyControlTokens(string value)
+		{
+			if (string.IsNullOrEmpty(value))
+				return value;
+
+			value = Regex.Replace(value, @"[ \t]*\bNEWBLOCK\b[ \t]*", "\n\n");
+			return Regex.Replace(value, @"[ \t]*\bNEWLN\b[ \t]*", "\n");
 		}
 
 		public static string GetGUIText(string key, params object[] args)

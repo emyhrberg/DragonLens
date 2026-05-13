@@ -2,6 +2,7 @@
 using DragonLens.Content.Themes.IconProviders;
 using DragonLens.Content.Tools;
 using DragonLens.Content.Tools.Despawners;
+using DragonLens.Content.Tools.Developer;
 using DragonLens.Content.Tools.Editors;
 using DragonLens.Content.Tools.Gameplay;
 using DragonLens.Content.Tools.Map;
@@ -10,6 +11,7 @@ using DragonLens.Content.Tools.Spawners;
 using DragonLens.Content.Tools.Visualization;
 using DragonLens.Core.Systems.ThemeSystem;
 using DragonLens.Core.Systems.ToolbarSystem;
+using DragonLens.Core.Systems.ToolbarSystem.ExternalToolLayouts;
 
 namespace DragonLens.Core.Systems
 {
@@ -132,6 +134,8 @@ namespace DragonLens.Core.Systems
 			ThemeHandler.GetBoxProvider<SimpleBoxes>(),
 			ThemeHandler.GetIconProvider<DefaultIcons>());
 
+			SetupErkyDragonLensPreset();
+
 			//Attempts to mock the HEROs mod UI as best as possible
 			ToolbarHandler.BuildPreset("HEROS mod imitation", n =>
 			{
@@ -187,6 +191,71 @@ namespace DragonLens.Core.Systems
 					ThemeHandler.GetIconProvider<DefaultIcons>());
 
 			ToolbarHandler.activeToolbars.Clear();
+		}
+
+		public static void SetupErkyDragonLensPreset()
+		{
+			ToolbarHandler.BuildPreset("Erkys Layout", n =>
+			{
+				// --- Bottom toolbars ---
+
+				n.Add( // spawners
+					new Toolbar(new Vector2(0.15f, 1f), Orientation.Horizontal, AutomaticHideOption.Never)
+					.AddTool<ItemSpawner>()
+					.AddTool<NPCSpawner>()
+					.AddTool<ItemDespawner>()
+					.AddTool<NPCDespawner>()
+					.AddTool<BuffDespawner>()
+					);
+
+				n.Add( // main tools
+				new Toolbar(new Vector2(0.35f, 1f), Orientation.Horizontal, AutomaticHideOption.Never)
+					.AddTool<Godmode>()
+					.AddTool<InfiniteReach>()
+					.AddTool<NoClip>()
+					.AddTool<Timescale>()
+					.AddTool<Time>()
+					.AddTool<Weather>()
+					.AddTool<SpawnTool>()
+					);
+
+				n.Add( // main tools
+					new Toolbar(new Vector2(0.59f, 1f), Orientation.Horizontal, AutomaticHideOption.Never)
+					.AddTool<ItemEditor>()
+					.AddTool<PlayerEditorTool>()
+					.AddTool<Paint>()
+					.AddTool<Magnet>()
+					.AddTool<Floodlight>()
+					.AddTool<Hitboxes>()
+					.AddTool<PlayerManager>()
+					.AddTool<CustomizeTool>()
+					);
+
+				// Right side ErkySSC + Mod Reloader
+				var rightSideToolbar = new Toolbar(new Vector2(1f, 0.6f), Orientation.Vertical, AutomaticHideOption.Never);
+				ErkySSCLayoutTools.AddTools(rightSideToolbar);
+				ModReloaderLayoutTools.AddTools(rightSideToolbar);
+				PvPAdventureLayoutTools.AddTools(rightSideToolbar);
+				n.Add(rightSideToolbar);
+
+				// Left side PvP Adventure toolbar
+				var leftSideToolbar = new Toolbar(new Vector2(0f, 0.6f), Orientation.Vertical, AutomaticHideOption.Never);
+				ErkySSCLayoutTools.AddTools(rightSideToolbar);
+				ModReloaderLayoutTools.AddTools(rightSideToolbar);
+				PvPAdventureLayoutTools.AddTools(rightSideToolbar);
+				n.Add(rightSideToolbar);
+
+				// Map toolbar
+				n.Add(
+					new Toolbar(new Vector2(0f, 0.5f), Orientation.Vertical, AutomaticHideOption.NoMapScreen)
+					.AddTool<RevealMap>()
+					.AddTool<HideMap>()
+					.AddTool<MapTeleport>()
+					.AddTool<CustomizeTool>()
+					);
+			},
+			ThemeHandler.GetBoxProvider<SimpleBoxes>(),
+			ThemeHandler.GetIconProvider<DefaultIcons>());
 		}
 
 		public static void PanicToSetup()

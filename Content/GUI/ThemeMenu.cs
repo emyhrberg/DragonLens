@@ -1,6 +1,8 @@
 ﻿using DragonLens.Content.GUI.FieldEditors;
+using DragonLens.Content.Tools;
 using DragonLens.Core.Loaders.UILoading;
 using DragonLens.Core.Systems.ThemeSystem;
+using DragonLens.Core.Systems.ToolSystem;
 using DragonLens.Helpers;
 using System.Collections.Generic;
 using Terraria.GameInput;
@@ -18,6 +20,8 @@ namespace DragonLens.Content.GUI
 
 		private ColorEditor backgroundColorEditor;
 		private ColorEditor foregroundColorEditor;
+
+		public override Tool OwnerTool => ModContent.GetInstance<CustomizeTool>();
 
 		public override Rectangle DragBox => new((int)basePos.X, (int)basePos.Y, 574, 64);
 

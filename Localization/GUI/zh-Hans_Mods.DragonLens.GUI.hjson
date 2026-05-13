@@ -64,6 +64,11 @@ Layout: {
 		Tooltip: 包含所有可用工具的高级布局。 非常适合模组开发者或服务器管理员。
 	}
 
+	ErkysLayout: {
+		// Name: Erkys Layout
+		// Tooltip: An advanced layout with power tools on the bottom, developer tools on the right, and (optional) other mod extra tools to the left
+	}
+
 	HEROsMod: {
 		Name: 仿HERO's Mod
 		Tooltip: 与HERO's Mod相似的布局。

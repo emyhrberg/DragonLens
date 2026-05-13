@@ -77,6 +77,7 @@ namespace DragonLens.Content.GUI
 			UILoader.GetUIState<LayoutPresetBrowser>().visible = false;
 			UILoader.GetUIState<ThemeMenu>().visible = false;
 
+			global::DragonLens.Core.Systems.FirstTimeSetupSystem.trueFirstTime = false;
 			CustomizeTool.customizing = false;
 
 			UILoader.GetUIState<ToolbarState>().Refresh();
@@ -134,7 +135,8 @@ namespace DragonLens.Content.GUI
 	{
 		public override void SafeClick(UIMouseEvent evt)
 		{
-			UILoader.GetUIState<ThemeMenu>().visible = true;
+			ThemeMenu state = UILoader.GetUIState<ThemeMenu>();
+			state.visible = !state.visible;
 		}
 
 		public override void SafeUpdate(GameTime gameTime)
@@ -157,6 +159,7 @@ namespace DragonLens.Content.GUI
 		public override void SafeClick(UIMouseEvent evt)
 		{
 			GUIHelper.OpenConfig(ModContent.GetInstance<ToolConfig>());
+			CustomizeTool.TrackToolOptionsOpen();
 		}
 
 		public override void SafeUpdate(GameTime gameTime)

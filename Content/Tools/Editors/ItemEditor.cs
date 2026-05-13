@@ -33,6 +33,8 @@ namespace DragonLens.Content.Tools.Editors
 
 	internal class ItemEditorState : DraggableUIState
 	{
+		public override Tool OwnerTool => ModContent.GetInstance<ItemEditor>();
+
 		public Item item = new();
 
 		public ItemEditorSlot slot;

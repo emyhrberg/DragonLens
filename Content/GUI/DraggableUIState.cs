@@ -29,6 +29,7 @@ namespace DragonLens.Content.GUI
 		public bool dragging;
 		public Vector2 dragOff;
 		public bool visible;
+		private bool wasVisibleLastUpdate;
 
 		public int width;
 		public int height;
@@ -106,6 +107,11 @@ namespace DragonLens.Content.GUI
 
 		public sealed override void SafeUpdate(GameTime gameTime)
 		{
+			if (visible && !wasVisibleLastUpdate)
+				UILoader.BringToFront(this);
+
+			wasVisibleLastUpdate = visible;
+
 			if (!Main.mouseLeft && dragging)
 			{
 				dragging = false;

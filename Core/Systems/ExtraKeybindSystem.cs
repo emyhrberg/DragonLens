@@ -17,6 +17,16 @@ namespace DragonLens.Core.Systems
 
 		public override void ProcessTriggers(TriggersSet triggersSet)
 		{
+#if DEBUG
+			if (Main.keyState.IsKeyDown(Keys.F5) && Main.oldKeyState.IsKeyUp(Keys.F5))
+			{
+				string currentPath = System.IO.Path.Join(Main.SavePath, "DragonLensLayouts", "Current");
+				ToolbarHandler.ExportToFile(currentPath);
+				FirstTimeSetupSystem.SetupPresets();
+				ToolbarHandler.LoadFromFile(currentPath);
+				Main.NewText("Preset refreshed with F5");
+			}
+#endif
 			if (collapseAll.JustPressed)
 			{
 				if (ToolbarHandler.activeToolbars.Any(n => !n.collapsed))

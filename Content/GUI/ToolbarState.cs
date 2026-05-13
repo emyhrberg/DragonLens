@@ -18,6 +18,23 @@ namespace DragonLens.Content.GUI
 
 		public override bool Visible => true;
 
+		public override bool OwnsMouse(Point mouse)
+		{
+			if (CustomizeTool.customizing)
+				return true;
+
+			foreach (ToolbarElement element in toolbarElements)
+			{
+				if (element?.toolbar is null || element.toolbar.Invisible)
+					continue;
+
+				if (element.GetDimensions().ToRectangle().Contains(mouse))
+					return true;
+			}
+
+			return false;
+		}
+
 		public override int InsertionIndex(List<GameInterfaceLayer> layers)
 		{
 			return layers.FindIndex(layer => layer.Name.Equals("Vanilla: Mouse Text"));

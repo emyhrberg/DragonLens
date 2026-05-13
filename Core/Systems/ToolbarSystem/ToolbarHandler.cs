@@ -51,6 +51,8 @@ namespace DragonLens.Core.Systems.ToolbarSystem
 				File.WriteAllText(versionPath, $"{Mod.Version}");
 			}
 
+			FirstTimeSetupSystem.SetupErkyDragonLensPreset();
+
 			// Attempt to load the current layout
 			string currentPath = Path.Join(Main.SavePath, "DragonLensLayouts", "Current");
 

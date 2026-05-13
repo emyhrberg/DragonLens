@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Terraria;
 using Terraria.ID;
+using Terraria.ModLoader.Config.UI;
 using Terraria.ModLoader.UI.Elements;
 using Terraria.UI;
 
@@ -19,12 +20,34 @@ namespace DragonLens.Content.Tools
 	internal class CustomizeTool : Tool
 	{
 		public static bool customizing;
+		private static bool toolOptionsOpen;
 
 		public override string IconKey => "Customize";
+		public override bool IsActive => customizing || ToolOptionsOpen || base.IsActive;
 
 		public static string GetText(string key, params object[] args)
 		{
 			return LocalizationHelper.GetText($"Tools.CustomizeTool.{key}", args);
+		}
+
+		public static void TrackToolOptionsOpen()
+		{
+			toolOptionsOpen = true;
+		}
+
+		private static bool ToolOptionsOpen
+		{
+			get
+			{
+				if (!toolOptionsOpen)
+					return false;
+
+				if (Main.InGameUI?.CurrentState is UIModConfig or UIModConfigList)
+					return true;
+
+				toolOptionsOpen = false;
+				return false;
+			}
 		}
 
 		public override void OnActivate()
@@ -35,23 +58,6 @@ namespace DragonLens.Content.Tools
 
 				if (customizing)
 					UILoader.GetUIState<ToolbarState>().Customize();
-			}
-		}
-
-		public override void DrawIcon(SpriteBatch spriteBatch, Rectangle position)
-		{
-			base.DrawIcon(spriteBatch, position);
-
-			if (customizing)
-			{
-				GUIHelper.DrawOutline(spriteBatch, new Rectangle(position.X - 4, position.Y - 4, 46, 46), ThemeHandler.ButtonColor.InvertColor());
-
-				Texture2D tex = Assets.Misc.GlowAlpha.Value;
-				Color color = Color.White;
-				color.A = 0;
-				var target = new Rectangle(position.X, position.Y, 38, 38);
-
-				spriteBatch.Draw(tex, target, color);
 			}
 		}
 	}
