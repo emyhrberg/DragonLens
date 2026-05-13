@@ -1,4 +1,5 @@
 ﻿using DragonLens.Core.Systems.ToolSystem;
+using DragonLens.Content.Tools;
 using System.Collections.Generic;
 using Terraria.ModLoader.IO;
 
@@ -74,14 +75,23 @@ namespace DragonLens.Core.Systems.ToolbarSystem
 		/// <summary>
 		/// If the toolbar should not draw at all, even a collapse button
 		/// </summary>
-		public bool Invisible => automaticHideOption switch
+		public bool Invisible
 		{
-			AutomaticHideOption.Never => false || Main.mapFullscreen,
-			AutomaticHideOption.InventoryOpen => Main.playerInventory || Main.mapFullscreen,
-			AutomaticHideOption.InventoryClosed => !Main.playerInventory || Main.mapFullscreen,
-			AutomaticHideOption.NoMapScreen => !Main.mapFullscreen,
-			_ => false,
-		};
+			get
+			{
+				if (CustomizeTool.customizing)
+					return false;
+
+				return automaticHideOption switch
+				{
+					AutomaticHideOption.Never => false || Main.mapFullscreen,
+					AutomaticHideOption.InventoryOpen => Main.playerInventory || Main.mapFullscreen,
+					AutomaticHideOption.InventoryClosed => !Main.playerInventory || Main.mapFullscreen,
+					AutomaticHideOption.NoMapScreen => !Main.mapFullscreen,
+					_ => false,
+				};
+			}
+		}
 
 		/// <summary>
 		/// The direction in which a toolbar should collapse itself

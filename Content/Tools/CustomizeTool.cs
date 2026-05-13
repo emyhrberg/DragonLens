@@ -122,11 +122,11 @@ namespace DragonLens.Content.Tools
 
 		public override void DraggableUdpate(GameTime gameTime)
 		{
-			// Have the browser follow expected visibility on map VS non-map bars
-			if (TrackedToolbar != null && TrackedToolbar.automaticHideOption != AutomaticHideOption.NoMapScreen && Main.mapFullscreen)
+			// Outside customization, have the browser follow expected visibility on map VS non-map bars.
+			if (!CustomizeTool.customizing && TrackedToolbar != null && TrackedToolbar.automaticHideOption != AutomaticHideOption.NoMapScreen && Main.mapFullscreen)
 				visible = false;
 
-			if (TrackedToolbar != null && TrackedToolbar.automaticHideOption == AutomaticHideOption.NoMapScreen && !Main.mapFullscreen)
+			if (!CustomizeTool.customizing && TrackedToolbar != null && TrackedToolbar.automaticHideOption == AutomaticHideOption.NoMapScreen && !Main.mapFullscreen)
 				visible = false;
 
 			base.DraggableUdpate(gameTime);
