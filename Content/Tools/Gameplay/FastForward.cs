@@ -1,35 +1,31 @@
-﻿using DragonLens.Core.Systems.ThemeSystem;
+using DragonLens.Core.Systems.ThemeSystem;
 using DragonLens.Core.Systems.ToolSystem;
 using DragonLens.Helpers;
 using Terraria.ID;
-using Terraria.ModLoader.IO;
 
 namespace DragonLens.Content.Tools.Gameplay
 {
 	internal class FastForward : Tool
 	{
-		public static int speedup = 0;
+		private const int NormalSpeedIndex = 4;
+		private const int MaxSpeedIndex = 8;
 
 		public override string IconKey => "FastForward";
 
 		public override bool HasRightClick => true;
-		public override void ResetForNonAdmin(Player player)
-		{
-			speedup = 0;
-		}
+
 		public override void OnActivate()
 		{
 			if (Main.netMode != NetmodeID.SinglePlayer)
 			{
 				Main.NewText(LocalizationHelper.GetToolText("FastForward.MultiplayerDisabled"), Color.Red);
-				speedup = 0;
 				return;
 			}
 
-			if (speedup < 4)
-				speedup++;
-			else
-				speedup = 0;
+			int currentIndex = GetCurrentScaleIndex();
+			int nextIndex = currentIndex < NormalSpeedIndex || currentIndex >= MaxSpeedIndex ? NormalSpeedIndex : currentIndex + 1;
+
+			SetScaleIndex(nextIndex);
 		}
 
 		public override void OnRightClick()
@@ -37,26 +33,28 @@ namespace DragonLens.Content.Tools.Gameplay
 			if (Main.netMode != NetmodeID.SinglePlayer)
 			{
 				Main.NewText(LocalizationHelper.GetToolText("FastForward.MultiplayerDisabled"), Color.Red);
-				speedup = 0;
 				return;
 			}
 
-			if (speedup > 0)
-				speedup--;
-			else
-				speedup = 4;
+			int currentIndex = GetCurrentScaleIndex();
+			int nextIndex = currentIndex <= NormalSpeedIndex ? MaxSpeedIndex : currentIndex - 1;
+
+			SetScaleIndex(nextIndex);
 		}
 
 		public override void DrawIcon(SpriteBatch spriteBatch, Rectangle position)
 		{
 			base.DrawIcon(spriteBatch, position);
 
-			if (speedup > 0)
+			int currentIndex = GetCurrentScaleIndex();
+
+			if (currentIndex > NormalSpeedIndex)
 			{
 				GUIHelper.DrawOutline(spriteBatch, new Rectangle(position.X - 4, position.Y - 4, 46, 46), ThemeHandler.ButtonColor.InvertColor());
 
 				Texture2D tex = Assets.Misc.GlowAlpha.Value;
-				Color color = new Color(150, 255, 170) * (speedup / 4f);
+				float intensity = (currentIndex - NormalSpeedIndex) / (float)(MaxSpeedIndex - NormalSpeedIndex);
+				Color color = new Color(150, 255, 170) * intensity;
 				color.A = 0;
 				var target = new Rectangle(position.X, position.Y, 38, 38);
 
@@ -64,59 +62,22 @@ namespace DragonLens.Content.Tools.Gameplay
 			}
 		}
 
-		public override void SaveData(TagCompound tag)
+		private static int GetCurrentScaleIndex()
 		{
-			tag["speedup"] = speedup;
+			TimeScaleSystem system = ModContent.GetInstance<TimeScaleSystem>();
+			return TimeScaleSystem.GetIndexForTimeScale(system.TimeScale);
 		}
 
-		public override void LoadData(TagCompound tag)
+		private static void SetScaleIndex(int index)
 		{
-			if (Main.netMode != NetmodeID.SinglePlayer)
-			{
-				speedup = 0;
-				return;
-			}
+			if (index < NormalSpeedIndex)
+				index = NormalSpeedIndex;
 
-			speedup = tag.GetInt("speedup");
-		}
-	}
+			if (index > MaxSpeedIndex)
+				index = MaxSpeedIndex;
 
-	internal class FastForwardSystem : ModSystem
-	{
-		public override void Load()
-		{
-			if (Main.dedServ)
-			{
-				return;
-			}
-
-			Terraria.On_Main.DoUpdate += UpdateExtraTimes;
-		}
-
-		public override void Unload()
-		{
-			Terraria.On_Main.DoUpdate -= UpdateExtraTimes;
-		}
-
-		private void UpdateExtraTimes(Terraria.On_Main.orig_DoUpdate orig, Main self, ref GameTime gameTime)
-		{
-			orig(self, ref gameTime);
-
-			if (Main.netMode != NetmodeID.SinglePlayer)
-			{
-				return;
-			}
-
-			int extra = FastForward.speedup;
-			if (extra <= 0)
-			{
-				return;
-			}
-
-			for (int k = 0; k < extra; k++)
-			{
-				orig(self, ref gameTime);
-			}
+			ModContent.GetInstance<TimeScaleSystem>().SetTimeScale(TimeScaleSystem.SnapValues[index]);
+			ToolHandler.SaveToolDataNow();
 		}
 	}
 }

@@ -1199,3 +1199,12 @@ Pause: {
 	// Description: Pauses the game. You can right click this tool to advance by a single frame while paused.
 	// RightClickName: (Pause) Step single frame
 }
+
+Timescale: {
+	// UITitle: Timescale
+	// DisplayName: Timescale
+	// Description: Adjust the frequency of game updates
+	// Speed: Speed: {0}
+	// SetSpeed: Set speed to {0}
+	// Pause: Pause
+}

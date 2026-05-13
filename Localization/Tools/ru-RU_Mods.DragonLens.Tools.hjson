@@ -1224,3 +1224,12 @@ Pause: {
 	Description: Позволяет останавливать игру. Нажмите ПКМ во время паузы, чтобы перейти на один кадр вперёд.
 	RightClickName: (Пауза) Перейти на один кадр вперёд
 }
+
+Timescale: {
+	// UITitle: Timescale
+	// DisplayName: Timescale
+	// Description: Adjust the frequency of game updates
+	// Speed: Speed: {0}
+	// SetSpeed: Set speed to {0}
+	// Pause: Pause
+}

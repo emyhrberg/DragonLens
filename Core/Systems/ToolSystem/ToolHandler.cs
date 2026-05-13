@@ -1,4 +1,4 @@
-﻿using DragonLens.Helpers;
+using DragonLens.Helpers;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -98,6 +98,15 @@ namespace DragonLens.Core.Systems.ToolSystem
 			TagIO.ToFile(tag, path);
 		}
 
+		public static void SaveToolDataNow()
+		{
+			if (Main.netMode != NetmodeID.SinglePlayer)
+				return;
+
+			Directory.CreateDirectory(GetToolDataDirectory());
+			ModContent.GetInstance<ToolHandler>().SaveToolData(GetToolDataPath());
+		}
+
 		/// <summary>
 		/// Load or create the tool data file and directory
 		/// </summary>
@@ -125,7 +134,7 @@ namespace DragonLens.Core.Systems.ToolSystem
 		/// </summary>
 		private void CreateOrLoadData()
 		{
-			string currentPath = Path.Join(Main.SavePath, "DragonLensLayouts", "ToolData", "ToolData");
+			string currentPath = GetToolDataPath();
 
 			if (File.Exists(currentPath))
 			{
@@ -133,7 +142,7 @@ namespace DragonLens.Core.Systems.ToolSystem
 			}
 			else
 			{
-				string dir = Path.Join(Main.SavePath, "DragonLensLayouts", "ToolData");
+				string dir = GetToolDataDirectory();
 				Directory.CreateDirectory(dir);
 
 				FileStream stream = File.Create(currentPath);
@@ -151,9 +160,17 @@ namespace DragonLens.Core.Systems.ToolSystem
 			if (Main.netMode != NetmodeID.SinglePlayer) // We dont want to lift the tool data from our last multiplayer session, that would be silly...
 				return;
 
-			string currentPath = Path.Join(Main.SavePath, "DragonLensLayouts", "ToolData", "ToolData");
+			SaveToolDataNow();
+		}
 
-			SaveToolData(currentPath);
+		private static string GetToolDataDirectory()
+		{
+			return Path.Join(Main.SavePath, "DragonLensLayouts", "ToolData");
+		}
+
+		private static string GetToolDataPath()
+		{
+			return Path.Join(GetToolDataDirectory(), "ToolData");
 		}
 	}
 

@@ -355,37 +355,60 @@ namespace DragonLens.Content.Tools.Editors
 
 		public override void Draw(SpriteBatch spriteBatch)
 		{
-			if (!parent.item.IsAir)
+			if (parent.item.IsAir)
+				return;
+
+			Helpers.GUIHelper.DrawBox(spriteBatch, GetDimensions().ToRectangle(), ThemeHandler.ButtonColor);
+
+			ModPrefix prefix = PrefixLoader.GetPrefix(prefixID);
+			string name = prefix is null ? Lang.prefix[prefixID].Value : prefix.DisplayName.Value;
+
+			Utils.DrawBorderString(spriteBatch, name, GetDimensions().Center() + Vector2.UnitY * 2, ItemRarity.GetColor(dummy.rare), 1, 0.5f, 0.5f);
+
+			if (prefix is not null)
 			{
-				Helpers.GUIHelper.DrawBox(spriteBatch, GetDimensions().ToRectangle(), ThemeHandler.ButtonColor);
+				Texture2D icon = GetPrefixModIcon(prefix.Mod);
 
-				string name = PrefixLoader.GetPrefix(prefixID) is null ? Lang.prefix[prefixID].Value : PrefixLoader.GetPrefix(prefixID).DisplayName.Value;
+				if (icon is not null)
+					spriteBatch.Draw(icon, GetDimensions().ToRectangle().TopLeft() + new Vector2(16, 16), null, Color.White, 0f, icon.Size() / 2f, 0.5f, SpriteEffects.None, 0f);
+			}
 
-				Utils.DrawBorderString(spriteBatch, name, GetDimensions().Center() + Vector2.UnitY * 2, ItemRarity.GetColor(dummy.rare), 1, 0.5f, 0.5f);
+			if (IsMouseHovering && CanShowTooltip)
+			{
+				Tooltip.SetName(name);
 
-				ModPrefix prefix = PrefixLoader.GetPrefix(prefixID);
+				if (prefix is not null)
+					Tooltip.SetTooltip(LocalizationHelper.GetToolText("ItemEditor.Filters.FromMod", prefix.Mod.DisplayName));
+				else
+					Tooltip.SetTooltip(LocalizationHelper.GetToolText("ItemEditor.Filters.FromVanilla"));
+			}
+		}
+		private static Texture2D GetPrefixModIcon(Mod mod)
+		{
+			if (TryGetModIcon(mod, "icon_small", "icon_small.png", out Texture2D smallIcon))
+				return smallIcon;
 
-				if (prefix != null)
-				{
-					string path = $"{prefix.Mod.Name}/icon_small";
-					Texture2D tex = ModContent.Request<Texture2D>(path).Value;
+			if (TryGetModIcon(mod, "icon", "icon.png", out Texture2D icon))
+				return icon;
 
-					spriteBatch.Draw(tex, GetDimensions().ToRectangle().TopLeft() + new Vector2(16, 16), null, Color.White, 0, tex.Size() / 2f, 0.5f, 0, 0);
-				}
+			return null;
+		}
 
-				if (IsMouseHovering && CanShowTooltip)
-				{
-					Tooltip.SetName(name);
+		private static bool TryGetModIcon(Mod mod, string assetName, string fileName, out Texture2D texture)
+		{
+			texture = null;
 
-					if (prefix != null)
-					{
-						Tooltip.SetTooltip(LocalizationHelper.GetToolText("ItemEditor.Filters.FromMod", prefix.Mod.DisplayName));
-					}
-					else
-					{
-						Tooltip.SetTooltip(LocalizationHelper.GetToolText("ItemEditor.Filters.FromVanilla"));
-					}
-				}
+			if (mod is null || !mod.FileExists(fileName))
+				return false;
+
+			try
+			{
+				texture = mod.Assets.Request<Texture2D>(assetName).Value;
+				return texture is not null;
+			}
+			catch
+			{
+				return false;
 			}
 		}
 

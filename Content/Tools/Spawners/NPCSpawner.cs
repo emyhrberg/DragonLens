@@ -20,6 +20,8 @@ namespace DragonLens.Content.Tools.Spawners
 	{
 		public override string IconKey => "NPCSpawner";
 
+		public override bool SyncOnClientJoint => false;
+
 		public override void SendPacket(BinaryWriter writer)
 		{
 			writer.Write(NPCBrowser.selected is null ? 0 : NPCBrowser.selected.netID);

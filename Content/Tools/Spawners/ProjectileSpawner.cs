@@ -19,6 +19,8 @@ namespace DragonLens.Content.Tools.Spawners
 	{
 		public override string IconKey => "ProjectileSpawner";
 
+		public override bool SyncOnClientJoint => false;
+
 		public override void SendPacket(BinaryWriter writer)
 		{
 			writer.Write(ProjectileBrowser.selected is null ? 0 : ProjectileBrowser.selected.type);

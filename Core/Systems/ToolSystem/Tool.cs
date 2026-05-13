@@ -129,7 +129,9 @@ namespace DragonLens.Core.Systems.ToolSystem
 			//	Mod.Logger.Info($"Sending packet for tool {DisplayName} ({Name}) from {Main.LocalPlayer.whoAmI}");
 #endif
 
-			ModPacket packet = Mod.GetPacket();
+			// Tool packets are dispatched by DragonLens.HandlePacket even when the Tool
+			// itself is contributed by another mod.
+			ModPacket packet = global::DragonLens.DragonLens.instance.GetPacket();
 			packet.Write("ToolPacket");
 			packet.Write($"{Mod.Name}/{Name}");
 			SendPacket(packet);

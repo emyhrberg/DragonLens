@@ -33,7 +33,7 @@ namespace DragonLens.Content.Tools.Gameplay
 		public override void LoadData(TagCompound tag)
 		{
 			float timeScale = tag.ContainsKey("timeScale") ? tag.GetFloat("timeScale") : 1f;
-			ModContent.GetInstance<TimeScaleSystem>().SetTimeScale(timeScale);
+			ModContent.GetInstance<TimeScaleSystem>().SetTimeScale(timeScale, true);
 		}
 
 		public override void SendPacket(BinaryWriter writer)
@@ -60,6 +60,12 @@ namespace DragonLens.Content.Tools.Gameplay
 		public static string GetText(string key, params object[] args)
 		{
 			return LocalizationHelper.GetText($"Tools.Timescale.{key}", args);
+		}
+
+		public static void CommitTimeScaleChange()
+		{
+			ToolHandler.NetSend<Timescale>();
+			ToolHandler.SaveToolDataNow();
 		}
 
 		private static bool SenderCanUseTimescale(int sender)
@@ -116,12 +122,10 @@ namespace DragonLens.Content.Tools.Gameplay
 			On_Main.UpdateTime -= HookUpdateTime;
 		}
 
-		public void SetTimeScale(float value)
+		public void SetTimeScale(float value, bool resetTransientState = false)
 		{
 			float snapped = SnapTimeScale(value);
-
-			if (Math.Abs(TimeScale - snapped) < 0.0001f)
-				return;
+			bool changed = Math.Abs(TimeScale - snapped) >= 0.0001f;
 
 			TimeScale = snapped;
 
@@ -129,7 +133,10 @@ namespace DragonLens.Content.Tools.Gameplay
 				lastNonZeroTimeScale = TimeScale;
 
 			ApplyFramePauseState();
-			ResetAccumulators();
+
+			if (changed || resetTransientState)
+				ResetAccumulators();
+
 			ClearStepRequest();
 		}
 
@@ -286,7 +293,12 @@ namespace DragonLens.Content.Tools.Gameplay
 			try
 			{
 				for (int i = 0; i < extraWholeUpdates; i++)
+				{
 					orig(self, ref gameTime);
+
+					if (Main.gameMenu || TimeScale <= 1f)
+						break;
+				}
 			}
 			finally
 			{
@@ -450,7 +462,7 @@ namespace DragonLens.Content.Tools.Gameplay
 				if (!Main.mouseLeft)
 				{
 					dragging = false;
-					ToolHandler.NetSend<Timescale>();
+					Timescale.CommitTimeScaleChange();
 				}
 			}
 			else
@@ -544,7 +556,7 @@ namespace DragonLens.Content.Tools.Gameplay
 		public override void SafeClick(UIMouseEvent evt)
 		{
 			ModContent.GetInstance<TimeScaleSystem>().TogglePause();
-			ToolHandler.NetSend<Timescale>();
+			Timescale.CommitTimeScaleChange();
 		}
 	}
 
@@ -586,7 +598,7 @@ namespace DragonLens.Content.Tools.Gameplay
 		public override void SafeClick(UIMouseEvent evt)
 		{
 			ModContent.GetInstance<TimeScaleSystem>().SetTimeScale(TimeScaleSystem.SnapValues[speedIndex]);
-			ToolHandler.NetSend<Timescale>();
+			Timescale.CommitTimeScaleChange();
 		}
 	}
 }

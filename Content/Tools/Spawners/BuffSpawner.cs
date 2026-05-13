@@ -21,6 +21,7 @@ namespace DragonLens.Content.Tools.Spawners
 	{
 		public override string IconKey => "BuffSpawner";
 
+		public override bool SyncOnClientJoint => false;
 
 		public override void SendPacket(BinaryWriter writer)
 		{
