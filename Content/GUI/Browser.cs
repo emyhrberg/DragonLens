@@ -10,6 +10,7 @@ using ReLogic.Localization.IME;
 using ReLogic.OS;
 using System;
 using System.Collections.Generic;
+using Terraria.GameContent.UI.Elements;
 using Terraria.GameContent;
 using Terraria.ModLoader.UI.Elements;
 using Terraria.UI;
@@ -421,6 +422,31 @@ namespace DragonLens.Content.GUI
 
 	internal class SearchBar : TextField
 	{
+		private readonly UIImageButton clearSearchButton;
+
+		public SearchBar()
+		{
+			clearSearchButton = new UIImageButton(Main.Assets.Request<Texture2D>("Images/UI/SearchCancel"))
+			{
+				HAlign = 1f,
+				VAlign = 0.5f,
+				Left = new StyleDimension(-2f, 0f)
+			};
+			clearSearchButton.OnLeftClick += ClearSearchField;
+			Append(clearSearchButton);
+		}
+
+		private void ClearSearchField(UIMouseEvent evt, UIElement listeningElement)
+		{
+			SetTyping();
+
+			if (string.IsNullOrEmpty(currentValue))
+				return;
+
+			currentValue = "";
+			updated = true;
+		}
+
 		public override void SafeUpdate(GameTime gameTime)
 		{
 			base.SafeUpdate(gameTime);
@@ -451,7 +477,10 @@ namespace DragonLens.Content.GUI
 
 			// composition string + cursor drawing below
 			if (!typing)
+			{
+				clearSearchButton.Draw(spriteBatch);
 				return;
+			}
 
 			pos.X += FontAssets.MouseText.Value.MeasureString(displayed).X * scale;
 			string compositionString = Platform.Get<IImeService>().CompositionString;
@@ -464,6 +493,8 @@ namespace DragonLens.Content.GUI
 
 			if (Main.GameUpdateCount % 20 < 10)
 				Utils.DrawBorderString(spriteBatch, "|", pos, Color.White, scale);
+
+			clearSearchButton.Draw(spriteBatch);
 		}
 	}
 
