@@ -12,6 +12,8 @@ namespace DragonLens.Content.GUI
 		public float oldValue;
 		public int scrolledRecently;
 		public static MethodInfo handleMethod = typeof(UIScrollbar).GetMethod("GetHandleRectangle", BindingFlags.NonPublic | BindingFlags.Instance);
+		public static FieldInfo isDraggingField = typeof(UIScrollbar).GetField("_isDragging", BindingFlags.NonPublic | BindingFlags.Instance);
+		public static FieldInfo dragYOffsetField = typeof(UIScrollbar).GetField("_dragYOffset", BindingFlags.NonPublic | BindingFlags.Instance);
 
 		public StyledScrollbar(UserInterface userInterface) : base(userInterface) { }
 
@@ -39,7 +41,7 @@ namespace DragonLens.Content.GUI
 			if (userInterface == null || !CanScroll)
 				return;
 
-			base.DrawSelf(spriteBatch);
+			UpdateDragging();
 
 			Rectangle back = GetDimensions().ToRectangle();
 			back.Inflate(2, 2);
@@ -50,6 +52,30 @@ namespace DragonLens.Content.GUI
 			handle.Offset(2, 0);
 
 			GUIHelper.DrawBox(spriteBatch, handle, ThemeHandler.ButtonColor);
+		}
+
+		public override void LeftMouseDown(UIMouseEvent evt)
+		{
+			base.LeftMouseDown(evt);
+
+			if (evt.Target != this || !CanScroll)
+				return;
+
+			Rectangle handle = (Rectangle)handleMethod.Invoke(this, null);
+			isDraggingField.SetValue(this, true);
+			dragYOffsetField.SetValue(this, evt.MousePosition.Y - handle.Y);
+		}
+
+		private void UpdateDragging()
+		{
+			if (!(bool)isDraggingField.GetValue(this))
+				return;
+
+			CalculatedStyle innerDimensions = GetInnerDimensions();
+			float dragYOffset = (float)dragYOffsetField.GetValue(this);
+			float handlePosition = userInterface.MousePosition.Y - innerDimensions.Y - dragYOffset;
+
+			ViewPosition = MathHelper.Clamp(handlePosition / innerDimensions.Height * MaxViewSize, 0, MaxViewSize - ViewSize);
 		}
 	}
 }
