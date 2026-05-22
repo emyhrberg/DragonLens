@@ -12,6 +12,7 @@ using DragonLens.Content.Tools.Visualization;
 using DragonLens.Core.Systems.ThemeSystem;
 using DragonLens.Core.Systems.ToolbarSystem;
 using DragonLens.Core.Systems.ToolbarSystem.ExternalToolLayouts;
+using Terraria.ID;
 
 namespace DragonLens.Core.Systems
 {
@@ -98,7 +99,7 @@ namespace DragonLens.Core.Systems
 					);
 
 				n.Add(
-					new Toolbar(new Vector2(0.45f, 1f), Orientation.Horizontal, AutomaticHideOption.Never)
+					new Toolbar(new Vector2(0.48f, 1f), Orientation.Horizontal, AutomaticHideOption.Never)
 					.AddTool<Godmode>()
 					.AddTool<InfiniteReach>()
 					.AddTool<NoClip>()
@@ -134,7 +135,7 @@ namespace DragonLens.Core.Systems
 			ThemeHandler.GetBoxProvider<SimpleBoxes>(),
 			ThemeHandler.GetIconProvider<DefaultIcons>());
 
-			SetupErkyDragonLensPreset();
+			SetupErkysLayout();
 
 			//Attempts to mock the HEROs mod UI as best as possible
 			ToolbarHandler.BuildPreset("HEROS mod imitation", n =>
@@ -193,23 +194,21 @@ namespace DragonLens.Core.Systems
 			ToolbarHandler.activeToolbars.Clear();
 		}
 
-		public static void SetupErkyDragonLensPreset()
+		public static void SetupErkysLayout()
 		{
 			ToolbarHandler.BuildPreset("Erkys Layout", n =>
 			{
-				// --- Bottom toolbars ---
-
-				n.Add( // spawners
+				n.Add(
 					new Toolbar(new Vector2(0.15f, 1f), Orientation.Horizontal, AutomaticHideOption.Never)
 					.AddTool<ItemSpawner>()
 					.AddTool<NPCSpawner>()
 					.AddTool<ItemDespawner>()
 					.AddTool<NPCDespawner>()
 					.AddTool<BuffDespawner>()
-					);
+				);
 
-				n.Add( // main tools
-				new Toolbar(new Vector2(0.35f, 1f), Orientation.Horizontal, AutomaticHideOption.Never)
+				n.Add(
+					new Toolbar(new Vector2(0.35f, 1f), Orientation.Horizontal, AutomaticHideOption.Never)
 					.AddTool<Godmode>()
 					.AddTool<InfiniteReach>()
 					.AddTool<NoClip>()
@@ -217,10 +216,10 @@ namespace DragonLens.Core.Systems
 					.AddTool<Time>()
 					.AddTool<Weather>()
 					.AddTool<SpawnTool>()
-					);
+				);
 
-				n.Add( // main tools
-					new Toolbar(new Vector2(0.59f, 1f), Orientation.Horizontal, AutomaticHideOption.Never)
+				n.Add(
+					new Toolbar(new Vector2(0.63f, 1f), Orientation.Horizontal, AutomaticHideOption.Never)
 					.AddTool<ItemEditor>()
 					.AddTool<PlayerEditorTool>()
 					.AddTool<Paint>()
@@ -228,31 +227,36 @@ namespace DragonLens.Core.Systems
 					.AddTool<Floodlight>()
 					.AddTool<Hitboxes>()
 					.AddTool<PlayerManager>()
+					.AddTool<AssetManager>()
 					.AddTool<CustomizeTool>()
-					);
+				);
 
-				// Right side ErkySSC + Mod Reloader
-				var rightSideToolbar = new Toolbar(new Vector2(1f, 0.6f), Orientation.Vertical, AutomaticHideOption.Never);
-				ErkySSCLayoutTools.AddTools(rightSideToolbar);
-				ModReloaderLayoutTools.AddTools(rightSideToolbar);
-				PvPAdventureLayoutTools.AddTools(rightSideToolbar);
-				n.Add(rightSideToolbar);
+				if (ExternalToolLayoutHelper.TryBuildToolbar("ErkySSC", new(1f, 0.2f), Orientation.Vertical, AutomaticHideOption.Never, out Toolbar erkySSCToolbar,
+					"DLTeamAssignerTool", "SSCManagerTool"))
+				{
+					n.Add(erkySSCToolbar);
+				}
 
-				// Left side PvP Adventure toolbar
-				var leftSideToolbar = new Toolbar(new Vector2(0f, 0.6f), Orientation.Vertical, AutomaticHideOption.Never);
-				ErkySSCLayoutTools.AddTools(rightSideToolbar);
-				ModReloaderLayoutTools.AddTools(rightSideToolbar);
-				PvPAdventureLayoutTools.AddTools(rightSideToolbar);
-				n.Add(rightSideToolbar);
+				string[] modReloaderTools = Main.netMode == NetmodeID.SinglePlayer
+					? ["DragonLensReload", "DragonLensUIPanel", "DragonLensLogPanel", "DragonLensModsPanel"]
+					: ["DragonLensReloadMP", "DragonLensUIPanel", "DragonLensLogPanel", "DragonLensModsPanel"];
 
-				// Map toolbar
+				if (ExternalToolLayoutHelper.TryBuildToolbar("ModReloader", new(1f, 0.4f), Orientation.Vertical, AutomaticHideOption.Never, out Toolbar modReloaderToolbar, modReloaderTools))
+					n.Add(modReloaderToolbar);
+
+				if (ExternalToolLayoutHelper.TryBuildToolbar("PvPAdventure", new(0f, 0.48f), Orientation.Vertical, AutomaticHideOption.Never, out Toolbar pvpAdventureToolbar,
+					"DLStartGameTool", "DLPauseTool", "DLEndGameTool", "DLPointsSetterTool", "DLOpenConfigTool"))
+				{
+					n.Add(pvpAdventureToolbar);
+				}
+
 				n.Add(
-					new Toolbar(new Vector2(0f, 0.5f), Orientation.Vertical, AutomaticHideOption.NoMapScreen)
+					new Toolbar(new Vector2(0f, 0.78f), Orientation.Vertical, AutomaticHideOption.NoMapScreen)
 					.AddTool<RevealMap>()
 					.AddTool<HideMap>()
 					.AddTool<MapTeleport>()
 					.AddTool<CustomizeTool>()
-					);
+				);
 			},
 			ThemeHandler.GetBoxProvider<SimpleBoxes>(),
 			ThemeHandler.GetIconProvider<DefaultIcons>());

@@ -318,16 +318,6 @@ Time: {
 	FreezeTooltip: Stop the time from changing. This will carry the time between worlds and game reloads!
 }
 
-Timescale: {
-	DisplayName: Timescale
-	Description: Adjust how quickly game ticks advance
-	UITitle: Set timescale
-	Speed: Speed: {0}
-	Pause: Pause
-	Resume: Resume
-	SetSpeed: Set speed to {0}
-}
-
 Weather: {
 	DisplayName: Weather tool
 	Description: Adjust the weather
@@ -918,16 +908,16 @@ PlayerManager: {
 	}
 
 	Filters: {
-		Spectator: {
-			Name: Spectator
-			Description: Any players currently spectating as ghosts
-			Toggle: Show or hide Spectator button
-		}
-
 		Frozen: {
 			Name: Frozen
 			Description: Any players currently frozen
 			Toggle: Show or hide Freeze button
+		}
+
+		Ghost: {
+			Name: Ghost
+			Description: Any players currently ghosts
+			Toggle: Show or hide Ghost button
 		}
 
 		Admin: {
@@ -1162,9 +1152,9 @@ PlayerManager: {
 		Tooltip: Freeze this player
 	}
 
-	Spectator: {
-		Name: Spectator
-		Tooltip: Switch spectator mode for this player
+	Ghost: {
+		Name: Ghost
+		Tooltip: Make this player a ghost
 	}
 
 	InventoryManager: {
@@ -1232,11 +1222,22 @@ Pause: {
 	RightClickName: (Pause) Step single frame
 }
 
+ClearChat: {
+	DisplayName: ClearChat
+	Description: The tool has no description! Add one in .hjson files!
+}
+
+Leave: {
+	DisplayName: Leave
+	Description: The tool has no description! Add one in .hjson files!
+}
+
 Timescale: {
-	UITitle: Timescale
 	DisplayName: Timescale
-	Description: Adjust the frequency of game updates
+	Description: Adjust how quickly game ticks advance
+	UITitle: Set timescale
 	Speed: Speed: {0}
-	SetSpeed: Set speed to {0}
 	Pause: Pause
+	Resume: Resume
+	SetSpeed: Set speed to {0}
 }

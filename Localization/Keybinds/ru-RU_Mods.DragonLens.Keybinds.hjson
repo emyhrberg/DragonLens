@@ -47,4 +47,6 @@ PlayerManager.DisplayName: "{$Mods.DragonLens.Tools.PlayerManager.DisplayName}"
 // AssetManager.DisplayName: Asset Manager
 // Pause.DisplayName: Pause
 // PauseRightClick.DisplayName: Pause Right Click
+// ClearChat.DisplayName: Clear Chat
+// Leave.DisplayName: Leave
 // Timescale.DisplayName: Timescale

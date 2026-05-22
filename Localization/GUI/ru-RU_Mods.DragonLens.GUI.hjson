@@ -64,11 +64,6 @@ Layout: {
 		Tooltip: Продвинутый шаблон со всеми доступными инструментами. Идеально подходит для разработчиков модов и опытных пользователей.
 	}
 
-	ErkysLayout: {
-		// Name: Erkys Layout
-		// Tooltip: An advanced layout with power tools on the bottom, developer tools on the right, and (optional) other mod extra tools to the left
-	}
-
 	HEROsMod: {
 		Name: Стиль HERO's Mod
 		Tooltip: Шаблон, пытающийся как можно точнее повторить HERO's мод.
@@ -82,6 +77,11 @@ Layout: {
 	Empty: {
 		Name: Пустой
 		Tooltip: Чистый лист для создания собственного шаблона.
+	}
+
+	ErkysLayout: {
+		// Name: Erkys Penguin Layout
+		// Tooltip: All the best tools + external mod tools
 	}
 }
 

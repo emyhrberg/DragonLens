@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DragonLens.Core.Systems;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -35,6 +36,9 @@ namespace DragonLens.Content.Tools.Multiplayer
 
 			if (type == "FreezePlayer")
 				ReceiveFrozenPlayer(reader, sender);
+
+			if (type == "GhostPlayer")
+				ReceiveGhostPlayer(reader, sender);
 		}
 
 		/// <summary>
@@ -164,13 +168,7 @@ namespace DragonLens.Content.Tools.Multiplayer
 		{
 			if (Main.netMode == NetmodeID.SinglePlayer)
 			{
-				HashSet<int> frozenPlayers = ModContent.GetInstance<PlayerManagerSystem>().frozenPlayers;
-				bool frozen = frozenPlayers.Add(targetWhoAmI);
-
-				if (!frozen)
-					frozenPlayers.Remove(targetWhoAmI);
-
-				NotifyFrozenState(targetWhoAmI, frozen);
+				ToggleFrozen(targetWhoAmI);
 				return;
 			}
 
@@ -190,12 +188,7 @@ namespace DragonLens.Content.Tools.Multiplayer
 
 			if (Main.netMode == NetmodeID.Server)
 			{
-				bool frozen = frozenPlayers.Add(targetWhoAmI);
-
-				if (!frozen)
-					frozenPlayers.Remove(targetWhoAmI);
-
-				NotifyFrozenState(targetWhoAmI, frozen);
+				bool frozen = ToggleFrozen(targetWhoAmI);
 
 				ModPacket packet = GetPacket("FreezePlayer");
 				packet.Write(targetWhoAmI);
@@ -207,10 +200,87 @@ namespace DragonLens.Content.Tools.Multiplayer
 				frozenPlayers.Remove(targetWhoAmI);
 		}
 
-		/// <summary>
-		/// Sends a packet to ban a player
-		/// </summary>
-		/// <param name="playerToKick">The WhoAmI of the player to ban</param>
+		public static void SendGhostPlayer(int targetWhoAmI)
+		{
+			if (Main.netMode == NetmodeID.SinglePlayer)
+			{
+				ToggleGhost(targetWhoAmI);
+				return;
+			}
+
+			ModPacket packet = GetPacket("GhostPlayer");
+			packet.Write(targetWhoAmI);
+			packet.Send();
+		}
+
+		private static void ReceiveGhostPlayer(BinaryReader reader, int sender)
+		{
+			int targetWhoAmI = reader.ReadInt32();
+
+			if (targetWhoAmI < 0 || targetWhoAmI >= Main.maxPlayers)
+				return;
+
+			if (Main.netMode == NetmodeID.Server)
+			{
+				if (sender < 0 || sender >= Main.maxPlayers)
+					return;
+
+				Player senderPlayer = Main.player[sender];
+
+				if (senderPlayer is null || !senderPlayer.active || !PermissionHandler.CanUseTools(senderPlayer))
+					return;
+
+				bool ghost = ToggleGhost(targetWhoAmI);
+
+				ModPacket packet = GetPacket("GhostPlayer");
+				packet.Write(targetWhoAmI);
+				packet.Write(ghost);
+				packet.Send();
+				return;
+			}
+
+			bool ghostState = reader.ReadBoolean();
+			SetGhost(targetWhoAmI, ghostState);
+		}
+
+		private static bool ToggleGhost(int targetWhoAmI)
+		{
+			Player target = Main.player[targetWhoAmI];
+
+			if (target is null || !target.active)
+				return false;
+
+			bool ghost = !target.ghost;
+			SetGhost(targetWhoAmI, ghost);
+			NotifyGhostState(targetWhoAmI, ghost);
+			return ghost;
+		}
+
+		private static bool ToggleFrozen(int targetWhoAmI)
+		{
+			if (targetWhoAmI < 0 || targetWhoAmI >= Main.maxPlayers)
+				return false;
+
+			HashSet<int> frozenPlayers = ModContent.GetInstance<PlayerManagerSystem>().frozenPlayers;
+			bool frozen = frozenPlayers.Add(targetWhoAmI);
+
+			if (!frozen)
+				frozenPlayers.Remove(targetWhoAmI);
+
+			NotifyFrozenState(targetWhoAmI, frozen);
+			return frozen;
+		}
+
+		private static void SetGhost(int targetWhoAmI, bool ghost)
+		{
+			Player target = Main.player[targetWhoAmI];
+
+			if (target is null || !target.active)
+				return;
+
+			target.ghost = ghost;
+		}
+
 		public static void SendKick(int playerToKick)
 		{
 			if (Main.netMode == NetmodeID.SinglePlayer)
@@ -224,6 +294,20 @@ namespace DragonLens.Content.Tools.Multiplayer
 		private static void RecieveKick(BinaryReader reader)
 		{
 			NetMessage.SendData(MessageID.Kick, reader.ReadInt32(), -1, NetworkText.FromLiteral("You were kicked by a DragonLens admin."));
+		}
+
+		private static void NotifyGhostState(int targetWhoAmI, bool ghost)
+		{
+			string text = ghost ? "You are now a ghost." : "You are no longer a ghost.";
+
+			if (Main.netMode == NetmodeID.SinglePlayer)
+			{
+				Main.NewText(text, Color.Yellow);
+				return;
+			}
+
+			if (Main.netMode == NetmodeID.Server)
+				ChatHelper.SendChatMessageToClient(NetworkText.FromLiteral(text), Color.Yellow, targetWhoAmI);
 		}
 
 		private static void NotifyFrozenState(int targetWhoAmI, bool frozen)

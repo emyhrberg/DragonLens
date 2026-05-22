@@ -62,20 +62,20 @@ namespace DragonLens.Core.Loaders.UILoading
 			string ownerName = owner?.GetType().Name ?? "null";
 			string topmostName = topmost?.GetType().Name ?? "null";
 
-#if DEBUG
-			if (element.IsMouseHovering && Main.GameUpdateCount % 60 == 0)
-			{
-				int sortedCount = SortedUserInterfaces?.Count ?? -1;
-				int uiCount = UserInterfaces?.Count ?? -1;
-				Point mouse = Main.MouseScreen.ToPoint();
+//#if DEBUG
+//			if (element.IsMouseHovering && Main.GameUpdateCount % 60 == 0)
+//			{
+//				int sortedCount = SortedUserInterfaces?.Count ?? -1;
+//				int uiCount = UserInterfaces?.Count ?? -1;
+//				Point mouse = Main.MouseScreen.ToPoint();
 
-				if (result is false)
-				{
-					//Main.NewText($"CantShowTooltip: element={elementName}, owner={ownerName}, topmost={topmostName}, result={result}, sorted={sortedCount}, ui={uiCount}, mouse={mouse}", Color.Orange);
-				}
+//				if (result is false)
+//				{
+//					//Main.NewText($"CantShowTooltip: element={elementName}, owner={ownerName}, topmost={topmostName}, result={result}, sorted={sortedCount}, ui={uiCount}, mouse={mouse}", Color.Orange);
+//				}
 
-			}
-#endif
+//			}
+//#endif
 
 			return result;
 		}

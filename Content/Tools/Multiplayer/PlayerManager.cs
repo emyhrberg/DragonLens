@@ -39,9 +39,9 @@ namespace DragonLens.Content.Tools.Multiplayer
 
 			if (state.visible)
 			{
-#if DEBUG
-				state.Refresh(); // debug, rebuild entire state
-#endif
+//#if DEBUG
+//				state.Refresh(); // debug, rebuild entire state
+//#endif
 				state.RefreshEntries();
 			}
 		}
@@ -149,7 +149,6 @@ namespace DragonLens.Content.Tools.Multiplayer
 			filters.AddFilter(new Filter(Assets.GUI.Frozen, "Tools.PlayerManager.Filters.Frozen", n => n is PlayerManagerItem pb && !ModContent.GetInstance<PlayerManagerSystem>().frozenPlayers.Contains(pb.player.whoAmI)));
 			filters.AddFilter(new Filter(Assets.Filters.Dead, "Tools.PlayerManager.Filters.Dead", n => n is PlayerManagerItem pb && !pb.player.dead));
 			filters.AddFilter(new Filter(Assets.Filters.HealthLow, "Tools.PlayerManager.Filters.LowHealth", n => n is PlayerManagerItem pb && (pb.player.dead || pb.player.statLife > pb.player.statLifeMax2 * 0.5f)));
-			filters.AddFilter(new Filter(Assets.Filters.HealthFull, "Tools.PlayerManager.Filters.FullHealth", n => n is PlayerManagerItem pb && (pb.player.dead || pb.player.statLife < pb.player.statLifeMax2)));
 
 			// Team filters
 			filters.AddSeperator("Tools.PlayerManager.FilterCategories.Team");
@@ -169,41 +168,19 @@ namespace DragonLens.Content.Tools.Multiplayer
 				Biomes.Caverns,
 				Biomes.Sky,
 				Biomes.TheUnderworld,
-				Biomes.Graveyard,
-				Biomes.Granite,
-				Biomes.Marble,
-				Biomes.UndergroundMushroom,
-				Biomes.SpiderNest,
 				Biomes.Snow,
-				Biomes.UndergroundSnow,
 				Biomes.Desert,
-				Biomes.UndergroundDesert,
 				Biomes.Ocean,
 				Biomes.Jungle,
 				Biomes.UndergroundJungle,
-				Biomes.Meteor,
 				Biomes.TheCorruption,
 				Biomes.UndergroundCorruption,
-				Biomes.CorruptIce,
-				Biomes.CorruptDesert,
-				Biomes.CorruptUndergroundDesert,
 				Biomes.TheCrimson,
-				Biomes.UndergroundCrimson,
-				Biomes.CrimsonIce,
-				Biomes.CrimsonDesert,
-				Biomes.CrimsonUndergroundDesert,
+				Biomes.UndergroundCrimson, 
 				Biomes.TheHallow,
 				Biomes.UndergroundHallow,
-				Biomes.HallowIce,
-				Biomes.HallowDesert,
-				Biomes.HallowUndergroundDesert,
-				Biomes.SurfaceMushroom,
 				Biomes.TheTemple,
-				Biomes.TheDungeon,
-				Biomes.NebulaPillar,
-				Biomes.SolarPillar,
-				Biomes.VortexPillar,
-				Biomes.StardustPillar
+				Biomes.TheDungeon
 			];
 
 			foreach (SpawnConditionBestiaryInfoElement biome in biomesToFilter)
@@ -221,7 +198,7 @@ namespace DragonLens.Content.Tools.Multiplayer
 			filters.AddFilter(new ButtonOptionFilter(this, "BringHere", Assets.GUI.BringHere));
 			filters.AddFilter(new ButtonOptionFilter(this, "GoTo", Assets.GUI.GoTo));
 			filters.AddFilter(new ButtonOptionFilter(this, "Frozen", Assets.GUI.Frozen));
-			filters.AddFilter(new ButtonOptionFilter(this, "Spectator", Assets.GUI.Ghost));
+			filters.AddFilter(new ButtonOptionFilter(this, "Ghost", Assets.GUI.Ghost));
 
 			// Stat toggles
 			filters.AddSeperator(LocalizationHelper.GetToolText("PlayerManager.FilterCategories.StatOptions"));
@@ -327,7 +304,7 @@ namespace DragonLens.Content.Tools.Multiplayer
 
 		private void CreateButtons()
 		{
-			AddActionButton("Spectator", new("Spectator", Assets.GUI.Ghost, ToggleSpectator, () => GhostSpectatingCompat.IsSpectator(player.whoAmI)));
+			AddActionButton("Ghost", new("Ghost", Assets.GUI.Ghost, ToggleGhostPlayer, () => GhostSpectatingCompat.IsAvailable() ? GhostSpectatingCompat.IsSpectator(player.whoAmI) : player.ghost));
 			AddActionButton("Frozen", new("Freeze", Assets.GUI.Frozen, FreezePlayer, () => PlayerManager.frozenPlayers.Contains(player.whoAmI)));
 			AddActionButton("GoTo", new("GoTo", Assets.GUI.GoTo, TeleportToPlayer));
 			AddActionButton("BringHere", new("BringHere", Assets.GUI.BringHere, TeleportToMe));
@@ -377,12 +354,6 @@ namespace DragonLens.Content.Tools.Multiplayer
 
 			foreach ((string key, PlayerManagerActionButton button) in actionButtons)
 			{
-				if (key == "Spectator" && !GhostSpectatingCompat.IsAvailable())
-				{
-					HideButton(button);
-					continue;
-				}
-
 				if (!PlayerBrowser.Settings.IsButtonVisible(key))
 				{
 					HideButton(button);
@@ -489,18 +460,18 @@ namespace DragonLens.Content.Tools.Multiplayer
 			PlayerManagerNetHandler.SendFrozenPlayer(player.whoAmI);
 		}
 
-		public void ToggleSpectator()
+		public void ToggleGhostPlayer()
 		{
 			if (!PermissionHandler.CanUseTools(Main.LocalPlayer))
 				return;
 
-			if (!GhostSpectatingCompat.IsAvailable())
+			if (GhostSpectatingCompat.IsAvailable())
 			{
-				Main.NewText("GhostSpectating mod is not loaded.", Color.Red);
+				GhostSpectatingNetHandler.SendToggleSpectator(player.whoAmI);
 				return;
 			}
 
-			GhostSpectatingNetHandler.SendToggleSpectator(player.whoAmI);
+			PlayerManagerNetHandler.SendGhostPlayer(player.whoAmI);
 		}
 
 		public void TeleportToMe()

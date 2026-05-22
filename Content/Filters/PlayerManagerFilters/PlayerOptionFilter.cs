@@ -10,7 +10,7 @@ namespace DragonLens.Content.Filters.PlayerManagerFilters
 		private readonly string key;
 
 		public PlayerOptionFilter(PlayerManagerBrowser browser, string key, Asset<Texture2D> texture)
-			: base(texture, LocalizationHelper.GetToolText($"PlayerManager.Filters.{key}"), _ => false)
+			: base(texture, $"Tools.PlayerManager.Filters.{key}", _ => false)
 		{
 			this.browser = browser;
 			this.key = key;
