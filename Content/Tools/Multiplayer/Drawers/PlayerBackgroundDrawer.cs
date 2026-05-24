@@ -1,4 +1,5 @@
 ﻿using DragonLens.Core.Systems;
+using DragonLens.Common.Compat;
 using ReLogic.Graphics;
 using System;
 using Terraria.GameContent;
@@ -88,6 +89,10 @@ namespace DragonLens.Content.Tools.Multiplayer.Drawers
 		public static void DrawPlayerFull(SpriteBatch sb, Rectangle rect, Player player, bool listMode)
 		{
 			Player drawPlayer = CreateDrawPlayer(player);
+			bool drawGhost = IsGhostPlayer(player);
+			Rectangle ghostFrame = drawGhost ? GetGhostFrame(drawPlayer) : Rectangle.Empty;
+			int playerPreviewWidth = drawGhost ? ghostFrame.Width : drawPlayer.width;
+			int playerPreviewHeight = drawGhost ? ghostFrame.Height : drawPlayer.height;
 
 			// Slight inset so it matches your biome background padding style
 			const int padding = 4;
@@ -114,29 +119,36 @@ namespace DragonLens.Content.Tools.Multiplayer.Drawers
 			if (listMode)
 			{
 				playerDrawX = rect.X + listPlayerX;
-				playerDrawY = rect.Center.Y - drawPlayer.height * 0.5f;
+				playerDrawY = rect.Center.Y - playerPreviewHeight * 0.5f;
 				playerPos = new Vector2(playerDrawX, playerDrawY) + Main.screenPosition;
 			}
 			else
 			{
-				playerPos = rect.Center.ToVector2() - new Vector2(drawPlayer.width, drawPlayer.height) * 0.5f + Main.screenPosition;
+				playerPos = rect.Center.ToVector2() - new Vector2(playerPreviewWidth, playerPreviewHeight) * 0.5f + Main.screenPosition;
 				playerDrawX = playerPos.X - Main.screenPosition.X;
 				playerDrawY = playerPos.Y - Main.screenPosition.Y;
 			}
 
-			// Force fullbright
-			bool oldDisplay = drawPlayer.isDisplayDollOrInanimate;
-			drawPlayer.isDisplayDollOrInanimate = true;
-			ModifyPlayerDrawInfo.ForceFullBrightOnce = true;
-
-			try
+			if (drawGhost)
 			{
-				Main.PlayerRenderer.DrawPlayer(Main.Camera, drawPlayer, playerPos, 0f, Vector2.Zero, 0f, 1f);
+				DrawGhost(sb, drawPlayer, playerPos);
 			}
-			finally
+			else
 			{
-				drawPlayer.isDisplayDollOrInanimate = oldDisplay;
-				ModifyPlayerDrawInfo.ForceFullBrightOnce = false;
+				// Force fullbright
+				bool oldDisplay = drawPlayer.isDisplayDollOrInanimate;
+				drawPlayer.isDisplayDollOrInanimate = true;
+				ModifyPlayerDrawInfo.ForceFullBrightOnce = true;
+
+				try
+				{
+					Main.PlayerRenderer.DrawPlayer(Main.Camera, drawPlayer, playerPos, 0f, Vector2.Zero, 0f, 1f);
+				}
+				finally
+				{
+					drawPlayer.isDisplayDollOrInanimate = oldDisplay;
+					ModifyPlayerDrawInfo.ForceFullBrightOnce = false;
+				}
 			}
 
 			// Restart spritebatch with linear sampling for text and other UI elements to avoid blurriness.
@@ -148,13 +160,13 @@ namespace DragonLens.Content.Tools.Multiplayer.Drawers
 			if (rect.Height >= minHeightForName)
 			{
 				DynamicSpriteFont font = FontAssets.MouseText.Value;
-				float maxNameWidth = drawPlayer.width + 55f;
+				float maxNameWidth = playerPreviewWidth + 55f;
 				string fittedName = PlayerStatDrawer.FitStatText(drawPlayer.name, maxNameWidth, nameScale);
 
 				if (!string.IsNullOrEmpty(fittedName))
 				{
 					Vector2 textSize = font.MeasureString(fittedName) * nameScale;
-					float playerCenterX = playerDrawX + drawPlayer.width * 0.5f;
+					float playerCenterX = playerDrawX + playerPreviewWidth * 0.5f;
 					float textX = playerCenterX - textSize.X * 0.5f;
 					float textY = playerDrawY - nameOffsetY;
 
@@ -188,6 +200,62 @@ namespace DragonLens.Content.Tools.Multiplayer.Drawers
 			drawPlayer.isDisplayDollOrInanimate = true;
 
 			return drawPlayer;
+		}
+
+		internal static bool IsGhostPlayer(Player player)
+		{
+			if (player == null || !player.active)
+				return false;
+
+			return player.ghost || (GhostSpectatingCompat.IsAvailable() && GhostSpectatingCompat.IsSpectator(player.whoAmI));
+		}
+
+		internal static void DrawGhostHead(SpriteBatch sb, Player drawPlayer, Rectangle target)
+		{
+			Texture2D texture = TextureAssets.Ghost.Value;
+			Rectangle source = new(0, 0, texture.Width, Math.Min(20, texture.Height));
+			sb.Draw(texture, target, source, GetGhostColor(drawPlayer));
+		}
+
+		private static void DrawGhost(SpriteBatch sb, Player drawPlayer, Vector2 position, float shadow = 0f)
+		{
+			Texture2D texture = TextureAssets.Ghost.Value;
+			Rectangle source = GetGhostFrame(drawPlayer);
+			Vector2 origin = new(source.Width * 0.5f, source.Height * 0.5f);
+			SpriteEffects effects = drawPlayer.direction != 1 ? SpriteEffects.FlipHorizontally : SpriteEffects.None;
+
+			sb.Draw(texture,
+				new Vector2(
+					(int)(position.X - Main.Camera.UnscaledPosition.X + source.Width / 2f),
+					(int)(position.Y - Main.Camera.UnscaledPosition.Y + source.Height / 2f)),
+				source,
+				GetGhostColor(drawPlayer, shadow),
+				0f,
+				origin,
+				1f,
+				effects,
+				0f);
+		}
+
+		private static Rectangle GetGhostFrame(Player drawPlayer)
+		{
+			Texture2D texture = TextureAssets.Ghost.Value;
+			int frameHeight = texture.Height / 4;
+			int frame = Math.Clamp(drawPlayer.ghostFrame, 0, 3);
+			return new Rectangle(0, frameHeight * frame, texture.Width, frameHeight);
+		}
+
+		private static Color GetGhostColor(Player drawPlayer, float shadow = 0f)
+		{
+			byte mouseTextColor = Main.mouseTextColor;
+			Color lightColor = Lighting.GetColor(
+				(int)((drawPlayer.position.X + drawPlayer.width * 0.5) / 16),
+				(int)((drawPlayer.position.Y + drawPlayer.height * 0.5) / 16),
+				new Color(mouseTextColor / 2 + 100, mouseTextColor / 2 + 100, mouseTextColor / 2 + 100, mouseTextColor / 2 + 100));
+
+			Color immuneAlpha = drawPlayer.GetImmuneAlpha(lightColor, shadow);
+			immuneAlpha.A = (byte)(immuneAlpha.A * (1f - Math.Max(0.5f, shadow - 0.5f)));
+			return immuneAlpha;
 		}
 
 		#region Draw helpers

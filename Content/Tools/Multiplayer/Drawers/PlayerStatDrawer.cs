@@ -159,7 +159,11 @@ namespace DragonLens.Content.Tools.Multiplayer.Drawers
 			if (player.team > 0) 
 				nameColor = Main.teamColor[player.team];
 
-			if (player.dead)
+			if (PlayerBackgroundDrawer.IsGhostPlayer(player))
+			{
+				PlayerBackgroundDrawer.DrawGhostHead(sb, player, iconBox);
+			}
+			else if (player.dead)
 			{
 				sb.Draw(Assets.Filters.Dead.Value, iconBox, Color.White);
 			}
@@ -498,6 +502,12 @@ namespace DragonLens.Content.Tools.Multiplayer.Drawers
 			Player target = Main.player[whoAmI];
 			if (target == null || !target.active)
 				return false;
+
+			if (PlayerBackgroundDrawer.IsGhostPlayer(target))
+			{
+				PlayerBackgroundDrawer.DrawGhostHead(sb, target, iconBox);
+				return true;
+			}
 
 			Color borderColor = target.team > 0 ? Main.teamColor[target.team] : Color.White;
 			Main.MapPlayerRenderer.DrawPlayerHead(Main.Camera, target, iconBox.TopLeft() + new Vector2(10f, 10f), 1f, 0.8f, borderColor);

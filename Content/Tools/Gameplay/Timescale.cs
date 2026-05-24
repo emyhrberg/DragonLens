@@ -275,6 +275,7 @@ namespace DragonLens.Content.Tools.Gameplay
 
 		private void HookDoUpdate(On_Main.orig_DoUpdate orig, Main self, ref GameTime gameTime)
 		{
+			// End of stream sometimes when loading a replay?
 			orig(self, ref gameTime);
 
 			if (runningExtraUpdates || Main.gameMenu || TimeScale <= 1f)
