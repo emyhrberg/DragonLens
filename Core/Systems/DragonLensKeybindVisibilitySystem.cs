@@ -6,86 +6,95 @@ using System.Linq;
 using System.Reflection;
 using Terraria.GameContent.UI.States;
 
-namespace DragonLens.Core.Systems
+namespace DragonLens.Core.Systems;
+
+[Autoload(Side = ModSide.Client)]
+internal sealed class DragonLensKeybindVisibilitySystem : ModSystem
 {
-	internal class DragonLensKeybindVisibilitySystem : ModSystem
+	private const string ModName = "DragonLens";
+
+	private bool? lastVisible;
+
+	public override void Load()
 	{
-		private const string ModName = "DragonLens";
+		MethodInfo assembleMethod = GetAssembleBindPanelsMethod();
+		MemberInfo keybindsMember = GetKeybindsMember();
+		MethodInfo visibleGetter = typeof(DragonLensKeybindVisibilitySystem).GetMethod(nameof(GetVisibleKeybinds), BindingFlags.Static | BindingFlags.NonPublic);
 
-		private static readonly MethodInfo OnAssembleBindPanelsMethod = typeof(UIManageControls).GetMethod("OnAssembleBindPanels", BindingFlags.Instance | BindingFlags.NonPublic);
-		private static readonly MethodInfo KeybindsGetterMethod = typeof(KeybindLoader).GetProperty(nameof(KeybindLoader.Keybinds), BindingFlags.Static | BindingFlags.Public)?.GetMethod;
-		private static readonly MethodInfo VisibleKeybindsGetterMethod = typeof(DragonLensKeybindVisibilitySystem).GetMethod(nameof(GetVisibleKeybinds), BindingFlags.Static | BindingFlags.NonPublic);
-
-		private bool? lastVisible;
-
-		public override void Load()
+		if (assembleMethod == null || keybindsMember == null || visibleGetter == null)
 		{
-			if (Main.dedServ)
-				return;
-
-			if (OnAssembleBindPanelsMethod is null || KeybindsGetterMethod is null || VisibleKeybindsGetterMethod is null)
-			{
-				Mod.Logger.Warn("Could not hook UIManageControls keybind visibility; DragonLens keybinds will remain visible in Controls.");
-				return;
-			}
-
-			MonoModHooks.Modify(OnAssembleBindPanelsMethod, FilterDragonLensKeybinds);
+			Mod.Logger.Warn($"Could not hook keybind visibility. assemble={assembleMethod != null}, keybinds={keybindsMember != null}, visible={visibleGetter != null}");
+			return;
 		}
 
-		public override void Unload()
+		MonoModHooks.Modify(assembleMethod, il => FilterDragonLensKeybinds(il, keybindsMember, visibleGetter));
+	}
+
+	public override void Unload()
+	{
+		lastVisible = null;
+		MonoModHooks.RemoveAll(Mod);
+	}
+
+	public override void PostUpdateEverything()
+	{
+		bool visible = ShouldShowDragonLensKeybinds();
+
+		if (lastVisible is null)
 		{
-			lastVisible = null;
-
-			if (!Main.dedServ)
-				MonoModHooks.RemoveAll(Mod);
-		}
-
-		public override void PostUpdateEverything()
-		{
-			if (Main.dedServ)
-				return;
-
-			bool visible = ShouldShowDragonLensKeybinds();
-
-			if (lastVisible is null)
-			{
-				lastVisible = visible;
-				return;
-			}
-
-			if (lastVisible == visible)
-				return;
-
 			lastVisible = visible;
-
-			if (Main.InGameUI?.CurrentState == Main.ManageControlsMenu)
-				Main.ManageControlsMenu.OnActivate();
+			return;
 		}
 
-		private static void FilterDragonLensKeybinds(ILContext il)
+		if (lastVisible == visible)
+			return;
+
+		lastVisible = visible;
+
+		if (Main.InGameUI?.CurrentState == Main.ManageControlsMenu)
+			Main.ManageControlsMenu.OnActivate();
+	}
+
+	private static MethodInfo GetAssembleBindPanelsMethod()
+	{
+		BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+
+		return typeof(UIManageControls).GetMethod("OnAssembleBindPanels", flags)
+			?? typeof(UIManageControls).GetMethod("AssembleBindPanels", flags);
+	}
+
+	private static MemberInfo GetKeybindsMember()
+	{
+		BindingFlags flags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
+		return (MemberInfo)typeof(KeybindLoader).GetProperty("Keybinds", flags)?.GetMethod ?? typeof(KeybindLoader).GetField("Keybinds", flags);
+	}
+
+	private static void FilterDragonLensKeybinds(ILContext il, MemberInfo keybindsMember, MethodInfo visibleGetter)
+	{
+		ILCursor c = new(il);
+
+		bool found = keybindsMember switch
 		{
-			ILCursor cursor = new(il);
+			MethodInfo method => c.TryGotoNext(MoveType.Before, i => i.MatchCall(method)),
+			FieldInfo field => c.TryGotoNext(MoveType.Before, i => i.MatchLdsfld(field)),
+			_ => false
+		};
 
-			if (!cursor.TryGotoNext(instruction => instruction.MatchCall(KeybindsGetterMethod)))
-				throw new InvalidOperationException("Could not find KeybindLoader.Keybinds in UIManageControls.OnAssembleBindPanels.");
+		if (!found)
+			throw new InvalidOperationException("Could not find KeybindLoader.Keybinds in UIManageControls.OnAssembleBindPanels.");
 
-			cursor.Next.OpCode = OpCodes.Call;
-			cursor.Next.Operand = VisibleKeybindsGetterMethod;
-		}
+		c.Remove();
+		c.Emit(OpCodes.Call, visibleGetter);
+	}
 
-		private static IEnumerable<ModKeybind> GetVisibleKeybinds()
-		{
-			IEnumerable<ModKeybind> keybinds = KeybindLoader.Keybinds;
+	private static IEnumerable<ModKeybind> GetVisibleKeybinds()
+	{
+		IEnumerable<ModKeybind> keybinds = KeybindLoader.Keybinds;
+		return ShouldShowDragonLensKeybinds() ? keybinds : keybinds.Where(keybind => keybind.Mod?.Name != ModName);
+	}
 
-			if (ShouldShowDragonLensKeybinds())
-				return keybinds;
-
-			return keybinds.Where(keybind => keybind.Mod?.Name != ModName);
-		}
-
-		private static bool ShouldShowDragonLensKeybinds()
-		{
-			return Main.LocalPlayer is not null && PermissionHandler.LooksLikeAdmin(Main.LocalPlayer);
-		}
+	private static bool ShouldShowDragonLensKeybinds()
+	{
+		return Main.LocalPlayer is not null && PermissionHandler.LooksLikeAdmin(Main.LocalPlayer);
 	}
 }
