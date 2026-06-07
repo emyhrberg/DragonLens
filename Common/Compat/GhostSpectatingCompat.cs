@@ -53,7 +53,9 @@ internal static class GhostSpectatingCompat
 
 		resolved = true;
 
-		return TryResolve("GhostSpectating", "GhostSpectating.Common.SpectatorMode");
+		return TryResolve("Reese", "Reese.Common.Spectator") ||
+			TryResolve("Reese", "Reese.Common.SpectatorMode") ||
+			TryResolve("GhostSpectating", "GhostSpectating.Common.SpectatorMode");
 	}
 
 	private static bool IsResolved()
